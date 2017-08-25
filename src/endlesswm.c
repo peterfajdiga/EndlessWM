@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <wlc/wlc.h>
 #include <linux/input.h>
+#include <wlc/wlc.h>
 
+#include "config.h"
 #include "keyboard.h"
+
+
 
 static bool view_created(wlc_handle view) {
     wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
@@ -34,6 +37,8 @@ static bool pointer_motion(wlc_handle handle, uint32_t time, double x, double y)
 }
 
 int main(int argc, char *argv[]) {
+    readConfig();
+    
     wlc_set_view_created_cb(&view_created);
     wlc_set_view_focus_cb(&view_focus);
     wlc_set_keyboard_key_cb(&keyboard_key);
