@@ -11,18 +11,20 @@
 
 
 static void initDefaults() {
-    keystroke_terminate        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_Escape};
-    keystroke_terminal         = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
-    keystroke_closeWindow      = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F5};
-    keystroke_launch           = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
-    keystroke_focusWindowUp    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
-    keystroke_focusWindowDown  = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Down};
-    keystroke_focusWindowLeft  = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Left};
-    keystroke_focusWindowRight = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Right};
-    keystroke_moveWindowUp     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
-    keystroke_moveWindowDown   = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
-    keystroke_moveWindowLeft   = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Left};
-    keystroke_moveWindowRight  = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
+    keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_Escape};
+    keystroke_terminal           = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
+    keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F5};
+    keystroke_launch             = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
+    keystroke_focusWindowUp      = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
+    keystroke_focusWindowDown    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Down};
+    keystroke_focusWindowLeft    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Left};
+    keystroke_focusWindowRight   = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Right};
+    keystroke_moveWindowUp       = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Up};
+    keystroke_moveWindowDown     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Down};
+    keystroke_moveWindowLeft     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Left};
+    keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Right};
+    keystroke_insertWindowUp     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
+    keystroke_insertWindowDown   = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
 }
 
 
