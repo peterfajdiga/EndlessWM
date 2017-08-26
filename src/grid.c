@@ -21,10 +21,16 @@ void grid_init() {
 
 
 struct Grid* getGrid(wlc_handle output) {
+    if (output >= gridCount) {
+        return NULL;
+    }
     return gridsByOutput[output];
 }
 
 struct Window* getWindow(wlc_handle view) {
+    if (view >= windowCount) {
+        return NULL;
+    }
     return windowsByView[view];
 }
 
