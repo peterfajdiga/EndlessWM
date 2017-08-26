@@ -82,6 +82,8 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowDown  , "moveWindowDown");
     readKeybinding(&keystroke_moveWindowLeft  , "moveWindowLeft");
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
+    readKeybinding(&keystroke_insertWindowUp  , "insertWindowUp");
+    readKeybinding(&keystroke_insertWindowDown, "insertWindowDown");
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);
