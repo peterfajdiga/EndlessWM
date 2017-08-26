@@ -37,11 +37,14 @@ void destroyGrid(wlc_handle output);
 
 void addRowToGrid(struct Row* row, struct Grid* grid);
 void removeRow(struct Row* row);
+// creates a new Row to house view
 struct Row* createRow(wlc_handle view);
 
 void addWindowToRow(struct Window* window, struct Row* row);
 void removeWindow(struct Window* window);
 struct Window* createWindow(wlc_handle view);
 void destroyWindow(wlc_handle view);
+
+uint32_t getMaxWidth(wlc_handle output);
 
 void printGrid(const struct Grid* grid);

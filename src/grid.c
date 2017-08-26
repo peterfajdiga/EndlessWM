@@ -5,6 +5,7 @@
 
 
 #define MIN_WINDOW_COUNT 64
+#define DEFAULT_ROW_HEIGHT 200
 
 
 
@@ -17,6 +18,9 @@ static size_t windowCount = 0;
 void grid_init() {
     windowsByView = malloc(MIN_WINDOW_COUNT * sizeof(struct Window*));
     windowCount = MIN_WINDOW_COUNT;
+    for (size_t i = 0; i < windowCount; i++) {
+        windowsByView[i] = NULL;
+    }
 }
 
 
@@ -94,8 +98,8 @@ void removeRow(struct Row* row) {
     }
 }
 
+// creates a new Row to house view
 struct Row* createRow(wlc_handle view) {
-    const struct wlc_size* viewSize = wlc_view_positioner_get_size(view);
     struct Grid* grid = getGrid(wlc_view_get_output(view));
     
     struct Row* row = malloc(sizeof(struct Row));
@@ -104,7 +108,7 @@ struct Row* createRow(wlc_handle view) {
     row->firstWindow = NULL;  // probably unnecessary
     row->lastWindow = NULL;   // probably unnecessary
     row->parent = NULL;       // probably unnecessary
-    row->height = viewSize->h;
+    row->height = DEFAULT_ROW_HEIGHT;
     
     addRowToGrid(row, grid);
     return row;
@@ -163,15 +167,13 @@ struct Window* createWindow(wlc_handle view) {
         windowCount *= 2;
         windowsByView = realloc(windowsByView, windowCount * sizeof(struct Window*));
     }
-    
-    const struct wlc_size* viewSize = wlc_view_positioner_get_size(view);
-    
+
     struct Window* window = malloc(sizeof(struct Window));
     window->left = NULL;
     window->right = NULL;
     window->view = view;
     window->parent = NULL;
-    window->width = viewSize->w;
+    window->width = getMaxWidth(output);
     
     windowsByView[view] = window;
     
@@ -208,7 +210,13 @@ void destroyWindow(wlc_handle view) {
 }
 
 
+uint32_t getMaxWidth(wlc_handle output) {
+    return wlc_output_get_virtual_resolution(output)->w;
+}
+
+
 void printGrid(const struct Grid* grid) {
+    fprintf(stderr, "Grid:\n");
     struct Row* row = grid->firstRow;
     while (row != NULL) {
         struct Window* window = row->firstWindow;
