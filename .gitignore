@@ -53,3 +53,12 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+
+
+# Clion
+.idea/
+
+# CMake
+cmake-build-debug/
