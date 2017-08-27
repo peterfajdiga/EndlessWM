@@ -15,7 +15,9 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
     
     if (state == WLC_KEY_STATE_PRESSED) {
         if (view) {
+
             // view-related keys
+
             if (testKeystroke(&keystroke_closeWindow, mods, sym)) {
                 wlc_view_close(view);
                 return true;
@@ -48,11 +50,10 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
                 }
                 return true;
             }
-
-
-
         }
+
         // global keys
+
         if (testKeystroke(&keystroke_terminate, mods, sym)) {
             wlc_terminate();
             return true;

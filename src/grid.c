@@ -1,6 +1,7 @@
 #include "grid.h"
 #include "config.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -50,6 +51,7 @@ struct Grid* createGrid(wlc_handle output) {
     grid->firstRow = NULL;
     grid->lastRow = NULL;
     grid->output = output;
+    grid->scroll = 0.0;
     
     gridsByOutput[output] = grid;
     return grid;
@@ -109,7 +111,7 @@ struct Row* createRow(wlc_handle view) {
     row->firstWindow = NULL;  // probably unnecessary
     row->lastWindow = NULL;   // probably unnecessary
     row->parent = NULL;       // probably unnecessary
-    row->height = DEFAULT_ROW_HEIGHT;
+    row->size = DEFAULT_ROW_HEIGHT;
     
     addRowToGrid(row, grid);
     return row;
@@ -174,7 +176,7 @@ struct Window* createWindow(wlc_handle view) {
     window->next = NULL;
     window->view = view;
     window->parent = NULL;
-    window->width = getMaxRowLength(output);
+    window->size = getMaxRowLength(output);
     
     windowsByView[view] = window;
     
@@ -236,11 +238,11 @@ void printGrid(const struct Grid* grid) {
 
 
 void layoutGrid(const struct Grid* grid) {
-    uint32_t originY = 0;
+    uint32_t originY = (uint32_t)round(grid->scroll);
     struct Row* row = grid->firstRow;
     while (row != NULL) {
         layoutRow(row, originY);
-        originY += row->height;
+        originY += row->size;
         row = row->next;
     }
 }
@@ -253,18 +255,24 @@ void layoutRow(const struct Row* row, uint32_t const originY) {
         if (grid_horizontal) {
             geometry.origin.x = originY;
             geometry.origin.y = originX;
-            geometry.size.w = row->height;
-            geometry.size.h = window->width;
+            geometry.size.w = row->size;
+            geometry.size.h = window->size;
         } else {
             geometry.origin.x = originX;
             geometry.origin.y = originY;
-            geometry.size.w = window->width;
-            geometry.size.h = row->height;
+            geometry.size.w = window->size;
+            geometry.size.h = row->size;
         }
         wlc_view_set_geometry(window->view, 0, &geometry);
-        originX += window->width;
+        originX += window->size;
         window = window->next;
     }
+}
+
+
+void scrollGrid(struct Grid* grid, double amount) {
+    grid->scroll += amount;
+    layoutGrid(grid);
 }
 
 

@@ -8,6 +8,7 @@ struct Grid {
     struct Row* firstRow;
     struct Row* lastRow;
     wlc_handle output;
+    double scroll;
 };
 
 struct Row {
@@ -16,7 +17,7 @@ struct Row {
     struct Window* firstWindow;
     struct Window* lastWindow;
     struct Grid* parent;
-    uint32_t height;
+    uint32_t size;
 };
 
 struct Window {
@@ -24,7 +25,7 @@ struct Window {
     struct Window* next;
     wlc_handle view;
     struct Row* parent;
-    uint32_t width;
+    uint32_t size;
 };
 
 void grid_init();
@@ -51,6 +52,8 @@ void printGrid(const struct Grid* grid);
 
 void layoutGrid(const struct Grid* grid);
 void layoutRow(const struct Row* row, uint32_t const originY);
+
+void scrollGrid(struct Grid* grid, double amount);
 
 
 // neighboring Windows
