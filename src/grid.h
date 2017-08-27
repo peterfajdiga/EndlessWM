@@ -51,3 +51,10 @@ void printGrid(const struct Grid* grid);
 
 void layoutGrid(const struct Grid* grid);
 void layoutRow(const struct Row* row, uint32_t const originY);
+
+
+// view management
+wlc_handle getViewAbove(wlc_handle view);
+wlc_handle getViewBelow(wlc_handle view);
+wlc_handle getViewLeft(wlc_handle view);
+wlc_handle getViewRight(wlc_handle view);

@@ -254,3 +254,19 @@ void layoutRow(const struct Row* row, uint32_t const originY) {
         window = window->right;
     }
 }
+
+
+
+// view management
+wlc_handle getViewAbove(wlc_handle view) {
+    return getWindow(view)->parent->above->firstWindow->view;
+}
+wlc_handle getViewBelow(wlc_handle view) {
+    return getWindow(view)->parent->below->firstWindow->view;
+}
+wlc_handle getViewLeft(wlc_handle view) {
+    return getWindow(view)->left->view;
+}
+wlc_handle getViewRight(wlc_handle view) {
+    return getWindow(view)->right->view;
+}
