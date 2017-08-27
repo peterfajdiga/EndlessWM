@@ -23,6 +23,22 @@ static bool view_created(wlc_handle view) {
 }
 
 static void view_destroyed(wlc_handle view) {
+    const struct Window* destroyedWindow = getWindow(view);
+    // focus next window
+    struct Window* nextWindow = destroyedWindow->next;
+    if (nextWindow == NULL) {
+        nextWindow = destroyedWindow->prev;
+    }
+    if (nextWindow == NULL) {
+        nextWindow = getWindowParallelNext(destroyedWindow);
+    }
+    if (nextWindow == NULL) {
+        nextWindow = getWindowParallelPrev(destroyedWindow);
+    }
+    if (nextWindow != NULL) {
+        wlc_view_focus(nextWindow->view);
+    }
+
     const struct Grid* grid = getGrid(wlc_view_get_output(view));
     destroyWindow(view);
     layoutGrid(grid);

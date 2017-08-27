@@ -11,8 +11,8 @@ struct Grid {
 };
 
 struct Row {
-    struct Row* above;
-    struct Row* below;
+    struct Row* prev;
+    struct Row* next;
     struct Window* firstWindow;
     struct Window* lastWindow;
     struct Grid* parent;
@@ -20,8 +20,8 @@ struct Row {
 };
 
 struct Window {
-    struct Window* left;
-    struct Window* right;
+    struct Window* prev;
+    struct Window* next;
     wlc_handle view;
     struct Row* parent;
     uint32_t width;
@@ -45,13 +45,21 @@ void removeWindow(struct Window* window);
 struct Window* createWindow(wlc_handle view);
 void destroyWindow(wlc_handle view);
 
-uint32_t getMaxWidth(wlc_handle output);
+uint32_t getMaxRowLength(wlc_handle output);
 
 void printGrid(const struct Grid* grid);
 
 void layoutGrid(const struct Grid* grid);
 void layoutRow(const struct Row* row, uint32_t const originY);
 
+
+// neighboring Windows
+struct Window* getWindowParallelPrev(const struct Window* window);
+struct Window* getWindowParallelNext(const struct Window* window);
+struct Window* getWindowAbove(const struct Window* window);
+struct Window* getWindowBelow(const struct Window* window);
+struct Window* getWindowLeft(const struct Window* window);
+struct Window* getWindowRight(const struct Window* window);
 
 // view management
 wlc_handle getViewAbove(wlc_handle view);

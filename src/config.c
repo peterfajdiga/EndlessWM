@@ -11,6 +11,7 @@
 
 
 static void initDefaults() {
+    // Keybindings
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_Escape};
     keystroke_terminal           = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
     keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F5};
@@ -25,6 +26,9 @@ static void initDefaults() {
     keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Right};
     keystroke_insertWindowUp     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
     keystroke_insertWindowDown   = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
+
+    // Grid
+    grid_horizontal = false;
 }
 
 
@@ -61,6 +65,17 @@ static void readKeybinding(struct Keystroke* pref, const char* key) {
     g_free(prefStr);
 }
 
+static void readBoolean(bool* pref, const char* key) {
+    const bool value = g_key_file_get_boolean(configFile, group, key, &error);
+    if (error != NULL) {
+        g_key_file_set_boolean(configFile, group, key, *pref);
+        changesMade = true;
+        error = NULL;
+    } else {
+        *pref = value;
+    }
+}
+
 void readConfig() {
     initDefaults();
     configFile = g_key_file_new();
@@ -85,6 +100,9 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
     readKeybinding(&keystroke_insertWindowUp  , "insertWindowUp");
     readKeybinding(&keystroke_insertWindowDown, "insertWindowDown");
+
+    group = "Grid";
+    readBoolean(&grid_horizontal, "rootHorizontal");
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);

@@ -21,16 +21,31 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
                 return true;
 
             } else if (testKeystroke(&keystroke_focusWindowUp, mods, sym)) {
-                wlc_view_focus(getViewAbove(view));
+                const struct Window* targetWindow = getWindowAbove(getWindow(view));
+                if (targetWindow != NULL) {
+                    wlc_view_focus(targetWindow->view);
+                }
                 return true;
+
             } else if (testKeystroke(&keystroke_focusWindowDown, mods, sym)) {
-                wlc_view_focus(getViewBelow(view));
+                const struct Window* targetWindow = getWindowBelow(getWindow(view));
+                if (targetWindow != NULL) {
+                    wlc_view_focus(targetWindow->view);
+                }
                 return true;
+
             } else if (testKeystroke(&keystroke_focusWindowLeft, mods, sym)) {
-                wlc_view_focus(getViewLeft(view));
+                const struct Window* targetWindow = getWindowLeft(getWindow(view));
+                if (targetWindow != NULL) {
+                    wlc_view_focus(targetWindow->view);
+                }
                 return true;
+
             } else if (testKeystroke(&keystroke_focusWindowRight, mods, sym)) {
-                wlc_view_focus(getViewRight(view));
+                const struct Window* targetWindow = getWindowRight(getWindow(view));
+                if (targetWindow != NULL) {
+                    wlc_view_focus(targetWindow->view);
+                }
                 return true;
             }
 

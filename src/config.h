@@ -5,6 +5,8 @@
 #include "keystroke.h"
 
 
+
+// Keybindings
 struct Keystroke keystroke_terminate;
 struct Keystroke keystroke_terminal;
 struct Keystroke keystroke_closeWindow;
@@ -19,5 +21,8 @@ struct Keystroke keystroke_moveWindowLeft;
 struct Keystroke keystroke_moveWindowRight;
 struct Keystroke keystroke_insertWindowUp;
 struct Keystroke keystroke_insertWindowDown;
+
+// Grid
+bool grid_horizontal;
 
 void readConfig();

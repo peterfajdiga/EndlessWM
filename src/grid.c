@@ -1,4 +1,5 @@
-#include "grid.h" 
+#include "grid.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -63,31 +64,31 @@ void destroyGrid(wlc_handle output) {
 
 
 void addRowToGrid(struct Row* row, struct Grid* grid) {
-    row->above = grid->lastRow;
-    row->below = NULL;
+    row->prev = grid->lastRow;
+    row->next = NULL;
     row->parent = grid;
     if (grid->firstRow == NULL) {
         assert (grid->lastRow == NULL);
         grid->firstRow = row;
     } else {
         assert (grid->lastRow != NULL);
-        grid->lastRow->below = row;
+        grid->lastRow->next = row;
     }
     grid->lastRow = row;
 }
 
 void removeRow(struct Row* row) {
     struct Grid* grid = row->parent;
-    struct Row* above = row->above;
-    struct Row* below = row->below;
-    row->above = NULL;  // probably unnecessary
-    row->below = NULL;  // probably unnecessary
+    struct Row* above = row->prev;
+    struct Row* below = row->next;
+    row->prev = NULL;  // probably unnecessary
+    row->next = NULL;  // probably unnecessary
     
     if (above != NULL) {
-        above->below = below;
+        above->next = below;
     }
     if (below != NULL) {
-        below->above = above;
+        below->prev = above;
     }
     
     if (grid->firstRow == row) {
@@ -103,8 +104,8 @@ struct Row* createRow(wlc_handle view) {
     struct Grid* grid = getGrid(wlc_view_get_output(view));
     
     struct Row* row = malloc(sizeof(struct Row));
-    row->above = NULL;        // probably unnecessary
-    row->below = NULL;        // probably unnecessary
+    row->prev = NULL;        // probably unnecessary
+    row->next = NULL;        // probably unnecessary
     row->firstWindow = NULL;  // probably unnecessary
     row->lastWindow = NULL;   // probably unnecessary
     row->parent = NULL;       // probably unnecessary
@@ -116,31 +117,31 @@ struct Row* createRow(wlc_handle view) {
 
 
 void addWindowToRow(struct Window* window, struct Row* row) {
-    window->left = row->lastWindow;
-    window->right = NULL;
+    window->prev = row->lastWindow;
+    window->next = NULL;
     window->parent = row;
     if (row->firstWindow == NULL) {
         assert (row->lastWindow == NULL);
         row->firstWindow = window;
     } else {
         assert (row->lastWindow != NULL);
-        row->lastWindow->right = window;
+        row->lastWindow->next = window;
     }
     row->lastWindow = window;
 }
 
 void removeWindow(struct Window* window) {
     struct Row* row = window->parent;
-    struct Window* left = window->left;
-    struct Window* right = window->right;
-    window->left  = NULL;  // probably unnecessary
-    window->right = NULL;  // probably unnecessary
+    struct Window* left = window->prev;
+    struct Window* right = window->next;
+    window->prev  = NULL;  // probably unnecessary
+    window->next = NULL;  // probably unnecessary
     
     if (left != NULL) {
-        left->right = right;
+        left->next = right;
     }
     if (right != NULL) {
-        right->left = left;
+        right->prev = left;
     }
     
     if (row->firstWindow == window) {
@@ -169,11 +170,11 @@ struct Window* createWindow(wlc_handle view) {
     }
 
     struct Window* window = malloc(sizeof(struct Window));
-    window->left = NULL;
-    window->right = NULL;
+    window->prev = NULL;
+    window->next = NULL;
     window->view = view;
     window->parent = NULL;
-    window->width = getMaxWidth(output);
+    window->width = getMaxRowLength(output);
     
     windowsByView[view] = window;
     
@@ -210,8 +211,12 @@ void destroyWindow(wlc_handle view) {
 }
 
 
-uint32_t getMaxWidth(wlc_handle output) {
-    return wlc_output_get_virtual_resolution(output)->w;
+uint32_t getMaxRowLength(wlc_handle output) {
+    if (grid_horizontal) {
+        return wlc_output_get_virtual_resolution(output)->h;
+    } else {
+        return wlc_output_get_virtual_resolution(output)->w;
+    }
 }
 
 
@@ -222,10 +227,10 @@ void printGrid(const struct Grid* grid) {
         struct Window* window = row->firstWindow;
         while (window != NULL) {
             fprintf(stderr, "%d ", window->view);
-            window = window->right;
+            window = window->next;
         }
         fprintf(stderr, "\n");
-        row = row->below;
+        row = row->next;
     }
 }
 
@@ -236,7 +241,7 @@ void layoutGrid(const struct Grid* grid) {
     while (row != NULL) {
         layoutRow(row, originY);
         originY += row->height;
-        row = row->below;
+        row = row->next;
     }
 }
 
@@ -245,28 +250,64 @@ void layoutRow(const struct Row* row, uint32_t const originY) {
     struct Window* window = row->firstWindow;
     while (window != NULL) {
         struct wlc_geometry geometry;
-        geometry.origin.x = originX;
-        geometry.origin.y = originY;
-        geometry.size.w = window->width;
-        geometry.size.h = row->height;
+        if (grid_horizontal) {
+            geometry.origin.x = originY;
+            geometry.origin.y = originX;
+            geometry.size.w = row->height;
+            geometry.size.h = window->width;
+        } else {
+            geometry.origin.x = originX;
+            geometry.origin.y = originY;
+            geometry.size.w = window->width;
+            geometry.size.h = row->height;
+        }
         wlc_view_set_geometry(window->view, 0, &geometry);
         originX += window->width;
-        window = window->right;
+        window = window->next;
     }
 }
 
 
 
-// view management
-wlc_handle getViewAbove(wlc_handle view) {
-    return getWindow(view)->parent->above->firstWindow->view;
+// neighboring Windows
+struct Window* getWindowParallelPrev(const struct Window* window) {
+    if (window->parent->prev == NULL) {
+        return NULL;
+    }
+    return window->parent->prev->firstWindow;
 }
-wlc_handle getViewBelow(wlc_handle view) {
-    return getWindow(view)->parent->below->firstWindow->view;
+
+struct Window* getWindowParallelNext(const struct Window* window) {
+    if (window->parent->next == NULL) {
+        return NULL;
+    }
+    return window->parent->next->firstWindow;
 }
-wlc_handle getViewLeft(wlc_handle view) {
-    return getWindow(view)->left->view;
+
+struct Window* getWindowAbove(const struct Window* window) {
+    if (grid_horizontal) {
+        return window->prev;
+    }
+    return getWindowParallelPrev(window);
 }
-wlc_handle getViewRight(wlc_handle view) {
-    return getWindow(view)->right->view;
+
+struct Window* getWindowBelow(const struct Window* window) {
+    if (grid_horizontal) {
+        return window->next;
+    }
+    return getWindowParallelNext(window);
+}
+
+struct Window* getWindowLeft(const struct Window* window) {
+    if (grid_horizontal) {
+        return getWindowParallelPrev(window);
+    }
+    return window->prev;
+}
+
+struct Window* getWindowRight(const struct Window* window) {
+    if (grid_horizontal) {
+        return getWindowParallelNext(window);
+    }
+    return window->next;
 }
