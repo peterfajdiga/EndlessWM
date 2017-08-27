@@ -5,7 +5,7 @@
 
 
 #define MIN_WINDOW_COUNT 64
-#define DEFAULT_ROW_HEIGHT 200
+#define DEFAULT_ROW_HEIGHT 400
 
 
 
@@ -226,5 +226,31 @@ void printGrid(const struct Grid* grid) {
         }
         fprintf(stderr, "\n");
         row = row->below;
+    }
+}
+
+
+void layoutGrid(const struct Grid* grid) {
+    uint32_t originY = 0;
+    struct Row* row = grid->firstRow;
+    while (row != NULL) {
+        layoutRow(row, originY);
+        originY += row->height;
+        row = row->below;
+    }
+}
+
+void layoutRow(const struct Row* row, uint32_t const originY) {
+    uint32_t originX = 0;
+    struct Window* window = row->firstWindow;
+    while (window != NULL) {
+        struct wlc_geometry geometry;
+        geometry.origin.x = originX;
+        geometry.origin.y = originY;
+        geometry.size.w = window->width;
+        geometry.size.h = row->height;
+        wlc_view_set_geometry(window->view, 0, &geometry);
+        originX += window->width;
+        window = window->right;
     }
 }

@@ -14,7 +14,7 @@ static bool view_created(wlc_handle view) {
         createWindow(view);
     }
     const struct Grid* grid = getGrid(wlc_view_get_output(view));
-    printGrid(grid);
+    layoutGrid(grid);
     
     wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
     wlc_view_bring_to_front(view);
@@ -25,7 +25,7 @@ static bool view_created(wlc_handle view) {
 static void view_destroyed(wlc_handle view) {
     const struct Grid* grid = getGrid(wlc_view_get_output(view));
     destroyWindow(view);
-    printGrid(grid);
+    layoutGrid(grid);
 }
 
 static void view_focus(wlc_handle view, bool focus) {

@@ -48,3 +48,6 @@ void destroyWindow(wlc_handle view);
 uint32_t getMaxWidth(wlc_handle output);
 
 void printGrid(const struct Grid* grid);
+
+void layoutGrid(const struct Grid* grid);
+void layoutRow(const struct Row* row, uint32_t const originY);

@@ -48,7 +48,7 @@ static GError* error = NULL;
 static bool changesMade = false;
 
 static void readKeybinding(struct Keystroke* pref, const char* key) {
-    const char* prefStr = g_key_file_get_value(configFile, group, key, &error);
+    char* prefStr = g_key_file_get_value(configFile, group, key, &error);
     if (error != NULL) {
         char* keystrokeString = keystrokeToString(pref);
         g_key_file_set_value(configFile, group, key, keystrokeString);
@@ -58,6 +58,7 @@ static void readKeybinding(struct Keystroke* pref, const char* key) {
     } else {
         *pref = parseKeystroke(prefStr);
     }
+    g_free(prefStr);
 }
 
 void readConfig() {
