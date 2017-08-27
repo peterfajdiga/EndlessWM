@@ -10,15 +10,15 @@
 
 
 static bool view_created(wlc_handle view) {
+    wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
+    wlc_view_bring_to_front(view);
+    wlc_view_focus(view);
+
     if (wlc_view_get_type(view) == 0) {
         createWindow(view);
     }
     const struct Grid* grid = getGrid(wlc_view_get_output(view));
     layoutGrid(grid);
-    
-    wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
-    wlc_view_bring_to_front(view);
-    wlc_view_focus(view);
     return true;
 }
 

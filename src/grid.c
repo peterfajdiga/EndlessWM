@@ -5,7 +5,7 @@
 
 
 #define MIN_WINDOW_COUNT 64
-#define DEFAULT_ROW_HEIGHT 400
+#define DEFAULT_ROW_HEIGHT 200
 
 
 
