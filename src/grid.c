@@ -9,6 +9,8 @@
 #define MIN_WINDOW_COUNT 64
 #define DEFAULT_ROW_HEIGHT 200
 
+#define GRIDDABLE_TYPES 0
+
 
 
 static struct Grid** gridsByOutput = NULL;
@@ -23,6 +25,10 @@ void grid_init() {
     for (size_t i = 0; i < windowCount; i++) {
         windowsByView[i] = NULL;
     }
+}
+
+bool isGriddable(wlc_handle view) {
+    return !(wlc_view_get_type(view) & (~GRIDDABLE_TYPES));
 }
 
 

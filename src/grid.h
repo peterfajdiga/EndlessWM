@@ -30,6 +30,8 @@ struct Window {
 
 void grid_init();
 
+bool isGriddable(wlc_handle view);
+
 struct Grid* getGrid(wlc_handle output);
 struct Window* getWindow(wlc_handle view);
 

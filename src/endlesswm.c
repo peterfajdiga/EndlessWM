@@ -13,34 +13,36 @@ static bool view_created(wlc_handle view) {
     wlc_view_bring_to_front(view);
     wlc_view_focus(view);
 
-    if (wlc_view_get_type(view) == 0) {
+    if (isGriddable(view)) {
         createWindow(view);
+        const struct Grid* grid = getGrid(wlc_view_get_output(view));
+        layoutGrid(grid);
     }
-    const struct Grid* grid = getGrid(wlc_view_get_output(view));
-    layoutGrid(grid);
     return true;
 }
 
 static void view_destroyed(wlc_handle view) {
-    const struct Window* destroyedWindow = getWindow(view);
-    // focus next window
-    struct Window* nextWindow = destroyedWindow->next;
-    if (nextWindow == NULL) {
-        nextWindow = destroyedWindow->prev;
-    }
-    if (nextWindow == NULL) {
-        nextWindow = getWindowParallelNext(destroyedWindow);
-    }
-    if (nextWindow == NULL) {
-        nextWindow = getWindowParallelPrev(destroyedWindow);
-    }
-    if (nextWindow != NULL) {
-        wlc_view_focus(nextWindow->view);
-    }
+    if (isGriddable(view)) {
+        const struct Window *destroyedWindow = getWindow(view);
+        // focus next window
+        struct Window *nextWindow = destroyedWindow->next;
+        if (nextWindow == NULL) {
+            nextWindow = destroyedWindow->prev;
+        }
+        if (nextWindow == NULL) {
+            nextWindow = getWindowParallelNext(destroyedWindow);
+        }
+        if (nextWindow == NULL) {
+            nextWindow = getWindowParallelPrev(destroyedWindow);
+        }
+        if (nextWindow != NULL) {
+            wlc_view_focus(nextWindow->view);
+        }
 
-    const struct Grid* grid = getGrid(wlc_view_get_output(view));
-    destroyWindow(view);
-    layoutGrid(grid);
+        const struct Grid *grid = getGrid(wlc_view_get_output(view));
+        destroyWindow(view);
+        layoutGrid(grid);
+    }
 }
 
 static void view_focus(wlc_handle view, bool focus) {
