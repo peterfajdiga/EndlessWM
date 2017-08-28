@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 
-#define MIN_WINDOW_COUNT 64
+#define MIN_WINDOW_COUNT 32
 #define DEFAULT_ROW_HEIGHT 200
 
 #define GRIDDABLE_TYPES 0
@@ -28,7 +28,7 @@ void grid_init() {
 }
 
 bool isGriddable(wlc_handle view) {
-    return !(wlc_view_get_type(view) & (~GRIDDABLE_TYPES));
+    return !(wlc_view_get_type(view) & ~GRIDDABLE_TYPES);
 }
 
 

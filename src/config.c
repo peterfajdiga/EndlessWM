@@ -1,8 +1,6 @@
 #include "config.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <glib.h>
 
 
@@ -12,20 +10,21 @@
 
 static void initDefaults() {
     // Keybindings
-    keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_Escape};
+    keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
     keystroke_terminal           = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
+    keystroke_ksysguard          = (struct Keystroke){WLC_BIT_MOD_CTRL, XKB_KEY_Escape};
     keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F5};
     keystroke_launch             = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
     keystroke_focusWindowUp      = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
     keystroke_focusWindowDown    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Down};
     keystroke_focusWindowLeft    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Left};
     keystroke_focusWindowRight   = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Right};
-    keystroke_moveWindowUp       = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Up};
-    keystroke_moveWindowDown     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Down};
-    keystroke_moveWindowLeft     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Left};
-    keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL, XKB_KEY_Right};
-    keystroke_insertWindowUp     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
-    keystroke_insertWindowDown   = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
+    keystroke_moveWindowUp       = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
+    keystroke_moveWindowDown     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
+    keystroke_moveWindowLeft     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Left};
+    keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
+    keystroke_moveRowUp          = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
+    keystroke_moveRowDown        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
 
     // Grid
     grid_horizontal = false;
@@ -98,8 +97,8 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowDown  , "moveWindowDown");
     readKeybinding(&keystroke_moveWindowLeft  , "moveWindowLeft");
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
-    readKeybinding(&keystroke_insertWindowUp  , "insertWindowUp");
-    readKeybinding(&keystroke_insertWindowDown, "insertWindowDown");
+    readKeybinding(&keystroke_moveRowUp       , "moveRowUp");
+    readKeybinding(&keystroke_moveRowDown     , "moveRowDown");
 
     group = "Grid";
     readBoolean(&grid_horizontal, "rootHorizontal");
