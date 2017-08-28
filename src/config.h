@@ -6,6 +6,10 @@
 
 
 
+// Grid
+bool grid_horizontal;
+bool grid_minimizeEmptySpace;
+
 // Keybindings
 struct Keystroke keystroke_terminate;
 struct Keystroke keystroke_terminal;
@@ -22,8 +26,5 @@ struct Keystroke keystroke_moveWindowLeft;
 struct Keystroke keystroke_moveWindowRight;
 struct Keystroke keystroke_moveRowUp;
 struct Keystroke keystroke_moveRowDown;
-
-// Grid
-bool grid_horizontal;
 
 void readConfig();

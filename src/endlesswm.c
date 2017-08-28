@@ -55,8 +55,10 @@ static void view_request_resize(wlc_handle view, uint32_t edges, const struct wl
 
 static void view_request_geometry(wlc_handle view, const struct wlc_geometry* g) {
     if (isGriddable(view)) {
-        assert (getWindow(view) != NULL);
-        layoutGrid(getWindow(view)->parent->parent);
+        struct Window* window = getWindow(view);
+        assert (window != NULL);
+        layoutRow(window->parent);
+        layoutGridAt(window->parent);
     }
 }
 

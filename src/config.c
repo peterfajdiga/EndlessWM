@@ -9,6 +9,10 @@
 
 
 static void initDefaults() {
+    // Grid
+    grid_horizontal = false;
+    grid_minimizeEmptySpace = true;
+
     // Keybindings
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
     keystroke_terminal           = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
@@ -25,9 +29,6 @@ static void initDefaults() {
     keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
     keystroke_moveRowUp          = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
     keystroke_moveRowDown        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
-
-    // Grid
-    grid_horizontal = false;
 }
 
 
@@ -83,6 +84,10 @@ void readConfig() {
 //     if (!g_key_file_load_from_file(configFile, configFilePath, G_KEY_FILE_NONE, NULL)){
 //         fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
 //     }
+
+    group = "Grid";
+    readBoolean(&grid_horizontal        , "rootHorizontal");
+    readBoolean(&grid_minimizeEmptySpace, "minimizeEmptySpace");
     
     group = "Keybindings";
     readKeybinding(&keystroke_terminate       , "terminate");
@@ -99,9 +104,6 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
     readKeybinding(&keystroke_moveRowUp       , "moveRowUp");
     readKeybinding(&keystroke_moveRowDown     , "moveRowDown");
-
-    group = "Grid";
-    readBoolean(&grid_horizontal, "rootHorizontal");
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);
