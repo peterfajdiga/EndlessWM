@@ -15,7 +15,7 @@ static bool view_created(wlc_handle view) {
 
     if (isGriddable(view)) {
         createWindow(view);
-        const struct Grid* grid = getGrid(wlc_view_get_output(view));
+        struct Grid* grid = getGrid(wlc_view_get_output(view));
         layoutGrid(grid);
     }
     return true;
@@ -39,7 +39,7 @@ static void view_destroyed(wlc_handle view) {
             wlc_view_focus(nextWindow->view);
         }
 
-        const struct Grid *grid = getGrid(wlc_view_get_output(view));
+        struct Grid *grid = getGrid(wlc_view_get_output(view));
         destroyWindow(view);
         layoutGrid(grid);
     }

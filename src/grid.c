@@ -90,6 +90,7 @@ void layoutGrid(struct Grid* grid) {
 void layoutGridAt(struct Row* row) {
     while (row != NULL) {
         positionRow(row);
+        applyRowGeometry(row);
         row = row->next;
     }
 }
@@ -99,17 +100,36 @@ void layoutGridAt(struct Row* row) {
 // row operations
 
 void addRowToGrid(struct Row* row, struct Grid* grid) {
-    row->prev = grid->lastRow;
-    row->next = NULL;
+    addRowToGridAfter(row, grid, grid->lastRow);
+}
+
+void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev) {
+    // row must not yet be in a grid
+    assert (row->prev == NULL);
+    assert (row->next == NULL);
+    assert (row->parent == NULL);
+
+    struct Row* next;
+    row->prev = prev;
     row->parent = grid;
-    if (grid->firstRow == NULL) {
-        assert (grid->lastRow == NULL);
+    if (prev == NULL) {
+        // placing as firstRow
+        next = grid->firstRow;
+        row->next = grid->firstRow;
         grid->firstRow = row;
     } else {
-        assert (grid->lastRow != NULL);
-        grid->lastRow->next = row;
+        assert (grid->firstRow != NULL);
+        assert (grid->lastRow  != NULL);
+        next = prev->next;
+        row->next = prev->next;
+        prev->next = row;
     }
-    grid->lastRow = row;
+    if (prev == grid->lastRow) {
+        grid->lastRow = row;
+    }
+    if (next != NULL) {
+        next->prev = row;
+    }
 
     layoutGridAt(row);
 }
@@ -118,8 +138,9 @@ void removeRow(struct Row* row) {
     struct Grid* grid = row->parent;
     struct Row* above = row->prev;
     struct Row* below = row->next;
-    row->prev = NULL;  // probably unnecessary
-    row->next = NULL;  // probably unnecessary
+    row->prev = NULL;  // probably unnecessary (except for asserts)
+    row->next = NULL;  // probably unnecessary (except for asserts)
+    row->parent = NULL;  // unnecessary        (except for asserts)
 
     if (grid->firstRow == row) {
         grid->firstRow = below;
@@ -142,11 +163,11 @@ struct Row* createRow(wlc_handle view) {
     struct Grid* grid = getGrid(wlc_view_get_output(view));
     
     struct Row* row = malloc(sizeof(struct Row));
-    row->prev = NULL;         // probably unnecessary
-    row->next = NULL;         // probably unnecessary
+    row->prev = NULL;         // probably unnecessary (except for asserts)
+    row->next = NULL;         // probably unnecessary (except for asserts)
     row->firstWindow = NULL;
     row->lastWindow = NULL;
-    row->parent = NULL;       // probably unnecessary
+    row->parent = NULL;       // probably unnecessary (except for asserts)
     row->size = DEFAULT_ROW_HEIGHT;
     
     addRowToGrid(row, grid);
@@ -225,7 +246,7 @@ void removeWindow(struct Window* window) {
     struct Window* left = window->prev;
     struct Window* right = window->next;
     window->prev  = NULL;  // probably unnecessary
-    window->next = NULL;  // probably unnecessary
+    window->next = NULL;   // probably unnecessary
     
     if (left != NULL) {
         left->next = right;

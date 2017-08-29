@@ -46,6 +46,7 @@ void layoutGridAt(struct Row* row);
 
 // row operations
 void addRowToGrid(struct Row* row, struct Grid* grid);
+void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev);
 void removeRow(struct Row* row);
 struct Row* createRow(wlc_handle view);  // creates a new Row to house the given view
 void resizeWindowsIfNecessary(struct Row* row);
@@ -58,7 +59,7 @@ void addWindowToRow(struct Window* window, struct Row* row);
 void removeWindow(struct Window* window);
 struct Window* createWindow(wlc_handle view);
 void destroyWindow(wlc_handle view);
-void positionWindow(struct Window* window);
+static void positionWindow(struct Window* window);
 void applyWindowGeometry(struct Window* window);
 
 // presentation

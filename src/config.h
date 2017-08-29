@@ -24,7 +24,7 @@ struct Keystroke keystroke_moveWindowUp;
 struct Keystroke keystroke_moveWindowDown;
 struct Keystroke keystroke_moveWindowLeft;
 struct Keystroke keystroke_moveWindowRight;
-struct Keystroke keystroke_moveRowUp;
-struct Keystroke keystroke_moveRowDown;
+struct Keystroke keystroke_moveRowBack;
+struct Keystroke keystroke_moveRowForward;
 
 void readConfig();

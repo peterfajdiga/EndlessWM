@@ -27,8 +27,8 @@ static void initDefaults() {
     keystroke_moveWindowDown     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
     keystroke_moveWindowLeft     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Left};
     keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
-    keystroke_moveRowUp          = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
-    keystroke_moveRowDown        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
+    keystroke_moveRowBack        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
+    keystroke_moveRowForward     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
 }
 
 
@@ -102,8 +102,8 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowDown  , "moveWindowDown");
     readKeybinding(&keystroke_moveWindowLeft  , "moveWindowLeft");
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
-    readKeybinding(&keystroke_moveRowUp       , "moveRowUp");
-    readKeybinding(&keystroke_moveRowDown     , "moveRowDown");
+    readKeybinding(&keystroke_moveRowBack     , "moveRowBack");
+    readKeybinding(&keystroke_moveRowForward  , "moveRowForward");
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);

@@ -18,37 +18,66 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
 
             // view-related keys
 
+            if (isGriddable(view)) {
+                if (testKeystroke(&keystroke_focusWindowUp, mods, sym)) {
+                    const struct Window* targetWindow = getWindowAbove(getWindow(view));
+                    if (targetWindow != NULL) {
+                        wlc_view_focus(targetWindow->view);
+                    }
+                    return true;
+
+                } else if (testKeystroke(&keystroke_focusWindowDown, mods, sym)) {
+                    const struct Window* targetWindow = getWindowBelow(getWindow(view));
+                    if (targetWindow != NULL) {
+                        wlc_view_focus(targetWindow->view);
+                    }
+                    return true;
+
+                } else if (testKeystroke(&keystroke_focusWindowLeft, mods, sym)) {
+                    const struct Window* targetWindow = getWindowLeft(getWindow(view));
+                    if (targetWindow != NULL) {
+                        wlc_view_focus(targetWindow->view);
+                    }
+                    return true;
+
+                } else if (testKeystroke(&keystroke_focusWindowRight, mods, sym)) {
+                    const struct Window* targetWindow = getWindowRight(getWindow(view));
+                    if (targetWindow != NULL) {
+                        wlc_view_focus(targetWindow->view);
+                    }
+                    return true;
+
+                } else if (testKeystroke(&keystroke_moveRowBack, mods, sym)) {
+                    struct Row* row = getWindow(view)->parent;
+                    if (row->prev == NULL) {
+                        // already at the top
+                        return true;
+                    }
+                    struct Grid* grid = row->parent;
+                    struct Row* targetRow = row->prev->prev;
+                    removeRow(row);
+                    addRowToGridAfter(row, grid, targetRow);
+                    return true;
+
+                } else if (testKeystroke(&keystroke_moveRowForward, mods, sym)) {
+                    struct Row* row = getWindow(view)->parent;
+                    if (row->next == NULL) {
+                        // already at the bottom
+                        return true;
+                    }
+                    struct Grid* grid = row->parent;
+                    struct Row* targetRow = row->next;
+                    removeRow(row);
+                    addRowToGridAfter(row, grid, targetRow);
+                    return true;
+
+                }
+            }
+
             if (testKeystroke(&keystroke_closeWindow, mods, sym)) {
                 wlc_view_close(view);
                 return true;
 
-            } else if (testKeystroke(&keystroke_focusWindowUp, mods, sym)) {
-                const struct Window* targetWindow = getWindowAbove(getWindow(view));
-                if (targetWindow != NULL) {
-                    wlc_view_focus(targetWindow->view);
-                }
-                return true;
-
-            } else if (testKeystroke(&keystroke_focusWindowDown, mods, sym)) {
-                const struct Window* targetWindow = getWindowBelow(getWindow(view));
-                if (targetWindow != NULL) {
-                    wlc_view_focus(targetWindow->view);
-                }
-                return true;
-
-            } else if (testKeystroke(&keystroke_focusWindowLeft, mods, sym)) {
-                const struct Window* targetWindow = getWindowLeft(getWindow(view));
-                if (targetWindow != NULL) {
-                    wlc_view_focus(targetWindow->view);
-                }
-                return true;
-
-            } else if (testKeystroke(&keystroke_focusWindowRight, mods, sym)) {
-                const struct Window* targetWindow = getWindowRight(getWindow(view));
-                if (targetWindow != NULL) {
-                    wlc_view_focus(targetWindow->view);
-                }
-                return true;
             }
         }
 
