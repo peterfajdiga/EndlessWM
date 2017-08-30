@@ -51,14 +51,14 @@ struct Grid* getGrid(wlc_handle const output) {
     return gridsByOutput[output];
 }
 
-static wlc_handle getGriddableParentView(wlc_handle view) {
-    while (view > 0 && !isGriddable(view)) {
+static wlc_handle getGriddedParentView(wlc_handle view) {
+    while (view > 0 && !isGridded(view)) {
         view = wlc_view_get_parent(view);
     }
     return view;
 }
 
-struct Window* getWindow(wlc_handle view) {
+struct Window* getWindow(wlc_handle const view) {
     if (view >= windowCount) {
         return NULL;
     }
@@ -66,11 +66,15 @@ struct Window* getWindow(wlc_handle view) {
     return windowsByView[view];
 }
 
-bool isGriddable(wlc_handle view) {
+bool isGriddable(wlc_handle const view) {
     return !(wlc_view_get_type(view) & ~GRIDDABLE_TYPES);
 }
 
-uint32_t getMaxRowLength(wlc_handle output) {
+bool isGridded(wlc_handle const view) {
+    return getWindow(view) != NULL;
+}
+
+uint32_t getMaxRowLength(wlc_handle const output) {
     if (grid_horizontal) {
         return wlc_output_get_virtual_resolution(output)->h;
     } else {
@@ -466,7 +470,7 @@ struct Window* getWindowRight(const struct Window* window) {
 
 typedef struct Window* (*WindowNeighborGetter)(const struct Window* window);
 static void focusViewInner(wlc_handle const view, WindowNeighborGetter getNeighbor) {
-    const struct Window* currentWindow = getWindow(getGriddableParentView(view));
+    const struct Window* currentWindow = getWindow(getGriddedParentView(view));
     if (currentWindow == NULL) {
         return;
     }

@@ -10,10 +10,8 @@
 
 static bool view_created(wlc_handle view) {
     wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
-    wlc_view_bring_to_front(view);
-    wlc_view_focus(view);
-
     createWindow(view);
+    wlc_view_focus(view);
     return true;
 }
 
@@ -35,6 +33,9 @@ static void view_request_geometry(wlc_handle view, const struct wlc_geometry* g)
 
 static void view_focus(wlc_handle view, bool focus) {
     wlc_view_set_state(view, WLC_BIT_ACTIVATED, focus);
+    if (getWindow(view) == NULL) {
+        wlc_view_bring_to_front(view);
+    }
 }
 
 int main(int argc, char *argv[]) {

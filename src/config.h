@@ -5,6 +5,11 @@
 #include "keystroke.h"
 
 
+#define MOD_WM0 WLC_BIT_MOD_LOGO
+#define MOD_WM1 (WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT)
+#define MOD_WM2 (WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL)
+
+
 
 // Grid
 bool grid_horizontal;

@@ -1,8 +1,7 @@
 #include "keyboard.h"
+#include "grid.h"
 
 #include <stdlib.h>
-
-#include "grid.h"
 
 
 bool testKeystroke(const struct Keystroke* keystroke, enum wlc_modifier_bit mods, uint32_t sym) {
@@ -10,15 +9,15 @@ bool testKeystroke(const struct Keystroke* keystroke, enum wlc_modifier_bit mods
 }
 
 bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *modifiers, uint32_t key, enum wlc_key_state state) {
-    const uint32_t sym = wlc_keyboard_get_keysym_for_key(key, NULL);
-    const enum wlc_modifier_bit mods = modifiers->mods;
+    uint32_t const sym = wlc_keyboard_get_keysym_for_key(key, NULL);
+    enum wlc_modifier_bit const mods = modifiers->mods;
     
     if (state == WLC_KEY_STATE_PRESSED) {
         if (view) {
 
             // view-related keys
 
-            if (isGriddable(view)) {
+            if (isGridded(view)) {
                 if (testKeystroke(&keystroke_focusWindowUp, mods, sym)) {
                     focusViewAbove(view);
                     return true;

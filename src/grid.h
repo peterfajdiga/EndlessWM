@@ -36,6 +36,7 @@ void grid_init();
 struct Grid* getGrid(wlc_handle output);
 struct Window* getWindow(wlc_handle view);
 bool isGriddable(wlc_handle view);
+bool isGridded(wlc_handle view);
 uint32_t getMaxRowLength(wlc_handle output);
 
 // grid operations
