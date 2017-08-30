@@ -59,9 +59,10 @@ static wlc_handle getGriddableParentView(wlc_handle view) {
 }
 
 struct Window* getWindow(wlc_handle view) {
-    if (view >= windowCount || !isGriddable(view)) {
+    if (view >= windowCount) {
         return NULL;
     }
+    assert ((windowsByView[view] == NULL) == !isGriddable(view));
     return windowsByView[view];
 }
 
