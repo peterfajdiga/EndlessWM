@@ -74,6 +74,10 @@ bool isGridded(wlc_handle const view) {
     return getWindow(view) != NULL;
 }
 
+bool isFloating(wlc_handle const view) {
+    return getWindow(view) == NULL && view > 0;
+}
+
 uint32_t getMaxRowLength(wlc_handle const output) {
     if (grid_horizontal) {
         return wlc_output_get_virtual_resolution(output)->h;

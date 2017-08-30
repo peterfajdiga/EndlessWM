@@ -4,7 +4,7 @@
 
 
 struct Keystroke {
-    enum wlc_modifier_bit mods;
+    uint32_t mods;
     uint32_t sym;
 }; 
 

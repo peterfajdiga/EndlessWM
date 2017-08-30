@@ -1,11 +1,27 @@
 #include "mouse.h"
 #include "config.h"
 #include "grid.h"
+#include "keyboard.h"
 
-#include <math.h>
 #include <linux/input.h>
+#include <math.h>
+#include <time.h>
+#include <wlc/wlc-wayland.h>
 
 
+
+enum MouseModState {
+    UNPRESSED,
+    PRESSED,
+    ACTION_PERFORMED
+};
+static enum MouseModState mouseBackMod    = UNPRESSED;
+static enum MouseModState mouseForwardMod = UNPRESSED;
+static void setMouseModActionPerformed(enum MouseModState* outState) {
+    if (*outState == PRESSED) {
+        *outState = ACTION_PERFORMED;
+    }
+}
 
 static enum MouseState {
     NORMAL,
@@ -16,8 +32,32 @@ static double prevMouseX, prevMouseY;
 static wlc_handle movedView = 0;
 
 
+void sendButton(wlc_handle const view, uint32_t const button) {
+    struct wl_client* const client = wlc_view_get_wl_client(view);
+    struct wl_resource* const client_pointer = wl_client_get_object(client, 13);
+    if (client_pointer == NULL) {
+        return;
+    }
+    assert (strcmp(client_pointer->object.interface->name, "wl_pointer") == 0);
+
+    uint32_t const serial = wl_display_next_serial(wlc_get_wl_display());
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint32_t const time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+
+    wl_pointer_send_button(client_pointer, serial, time, button, WL_POINTER_BUTTON_STATE_PRESSED);
+    wl_pointer_send_button(client_pointer, serial, time, button, WL_POINTER_BUTTON_STATE_RELEASED);
+}
+
 bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *modifiers, uint32_t button, enum wlc_button_state state, const struct wlc_point *position) {
-    enum wlc_modifier_bit const mods = modifiers->mods;
+    uint32_t mods = modifiers->mods;
+
+    if (mouseBackMod > UNPRESSED) {
+        mods |= MOD_WM0;
+    }
+    if (mouseForwardMod > UNPRESSED) {
+        mods |= MOD_WM1;
+    }
 
     switch (mouseState) {
         case NORMAL: {
@@ -26,20 +66,28 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
 
                     // view-related mouse events
 
-                    if (mods == MOD_WM0 && view > 0 && getWindow(view) == NULL) {
+                    if (testKeystroke(&mousestroke_move, mods, button) && isFloating(view)) {
                         mouseState = MOVING_FLOATING;
                         movedView = view;
                         wlc_view_bring_to_front(movedView);
+                        setMouseModActionPerformed(&mouseBackMod);
                         return true;
                     }
 
                     wlc_view_focus(view);
-                    return false;
                 }
 
                 // global mouse events
 
-                // nothing yet
+                if (mods == 0) {
+                    switch (button) {
+                        case BTN_EXTRA:
+                        case BTN_BACK:    mouseBackMod    = PRESSED; return true;
+                        case BTN_SIDE:
+                        case BTN_FORWARD: mouseForwardMod = PRESSED; return true;
+                        default: break;
+                    }
+                }
             }
             break;
         }
@@ -48,6 +96,28 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_LEFT) {
                 mouseState = NORMAL;
             }
+        }
+    }
+
+    if (state == WLC_BUTTON_STATE_RELEASED) {
+        switch (button) {
+            case BTN_EXTRA:
+            case BTN_BACK: {
+                if (mouseBackMod != ACTION_PERFORMED) {
+                    sendButton(view, BTN_EXTRA);
+                }
+                mouseBackMod = UNPRESSED;
+                return true;
+            }
+            case BTN_SIDE:
+            case BTN_FORWARD: {
+                if (mouseForwardMod != ACTION_PERFORMED) {
+                    sendButton(view, BTN_SIDE);
+                }
+                mouseForwardMod = UNPRESSED;
+                return true;
+            }
+            default: break;
         }
     }
 
@@ -78,7 +148,7 @@ bool pointer_motion(wlc_handle handle, uint32_t time, double x, double y) {
 }
 
 bool pointer_scroll(wlc_handle view, uint32_t time, const struct wlc_modifiers* modifiers, uint8_t axis_bits, double amount[2]) {
-    enum wlc_modifier_bit const mods = modifiers->mods;
+    uint32_t const mods = modifiers->mods;
 
     if (mods == MOD_WM0) {
         wlc_handle output = wlc_get_focused_output();

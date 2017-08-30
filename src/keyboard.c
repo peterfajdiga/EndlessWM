@@ -1,16 +1,36 @@
 #include "keyboard.h"
 #include "grid.h"
 
-#include <stdlib.h>
+#include <time.h>
+#include <wayland-server.h>
+#include <wlc/wlc-wayland.h>
 
 
-bool testKeystroke(const struct Keystroke* keystroke, enum wlc_modifier_bit mods, uint32_t sym) {
+
+bool testKeystroke(const struct Keystroke* const keystroke, uint32_t const mods, uint32_t const sym) {
     return keystroke->mods == mods && keystroke->sym == sym;
+}
+
+void sendKey(wlc_handle const view, const struct Keystroke* const keystroke) {
+    struct wl_client* const client = wlc_view_get_wl_client(view);
+    struct wl_resource* const client_pointer = wl_client_get_object(client, 14);
+    if (client_pointer == NULL) {
+        return;
+    }
+    assert (strcmp(client_pointer->object.interface->name, "wl_keyboard") == 0);
+
+    uint32_t const serial = wl_display_next_serial(wlc_get_wl_display());
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint32_t const time = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+
+    wl_keyboard_send_key(client_pointer, serial, time, 20, WL_KEYBOARD_KEY_STATE_PRESSED);
+    wl_keyboard_send_key(client_pointer, serial, time, 20, WL_KEYBOARD_KEY_STATE_RELEASED);
 }
 
 bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *modifiers, uint32_t key, enum wlc_key_state state) {
     uint32_t const sym = wlc_keyboard_get_keysym_for_key(key, NULL);
-    enum wlc_modifier_bit const mods = modifiers->mods;
+    uint32_t const mods = modifiers->mods;
     
     if (state == WLC_KEY_STATE_PRESSED) {
         if (view) {
@@ -48,7 +68,6 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
             if (testKeystroke(&keystroke_closeWindow, mods, sym)) {
                 wlc_view_close(view);
                 return true;
-
             }
         }
 

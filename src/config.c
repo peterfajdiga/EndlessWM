@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <glib.h>
+#include <linux/input.h>
 
 
 #define CONFIG_FILE_PATH "/.config/endlesswm"
@@ -30,6 +31,9 @@ static void initDefaults() {
     keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
     keystroke_moveRowBack        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
     keystroke_moveRowForward     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
+
+    // Mousebindings
+    mousestroke_move = (struct Keystroke){MOD_WM0, BTN_LEFT};
 }
 
 
