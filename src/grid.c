@@ -9,20 +9,23 @@
 #define MIN_WINDOW_COUNT 32
 #define DEFAULT_ROW_HEIGHT 200
 
-#define GRIDDABLE_TYPES 0
-
 
 
 static struct Grid** gridsByOutput = NULL;
 static size_t gridCount = 0;
 static struct Window** windowsByView = NULL;
 static size_t windowCount = 0;
+static uint32_t GRIDDABLE_TYPES = 0;
 
 void grid_init() {
     windowsByView = malloc(MIN_WINDOW_COUNT * sizeof(struct Window*));
     windowCount = MIN_WINDOW_COUNT;
     for (size_t i = 0; i < windowCount; i++) {
         windowsByView[i] = NULL;
+    }
+
+    if (!grid_floatingDialogs) {
+        GRIDDABLE_TYPES |= WLC_BIT_MODAL;
     }
 }
 

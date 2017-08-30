@@ -9,6 +9,7 @@
 // Grid
 bool grid_horizontal;
 bool grid_minimizeEmptySpace;
+bool grid_floatingDialogs;
 
 // Keybindings
 struct Keystroke keystroke_terminate;

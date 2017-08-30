@@ -12,6 +12,7 @@ static void initDefaults() {
     // Grid
     grid_horizontal = false;
     grid_minimizeEmptySpace = true;
+    grid_floatingDialogs = true;
 
     // Keybindings
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
@@ -88,7 +89,8 @@ void readConfig() {
     group = "Grid";
     readBoolean(&grid_horizontal        , "rootHorizontal");
     readBoolean(&grid_minimizeEmptySpace, "minimizeEmptySpace");
-    
+    readBoolean(&grid_floatingDialogs   , "floatingDialogs");
+
     group = "Keybindings";
     readKeybinding(&keystroke_terminate       , "terminate");
     readKeybinding(&keystroke_terminal        , "terminal");
