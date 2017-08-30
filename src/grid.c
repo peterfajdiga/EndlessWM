@@ -252,14 +252,12 @@ void applyRowGeometry(struct Row* row) {
 
 // window operations
 
-struct Window* createWindow(wlc_handle view) {
+struct Window* createWindow(wlc_handle const view) {
     if (!isGriddable(view)) {
         return NULL;
     }
-    wlc_handle output = wlc_view_get_output(view);
-    if (getGrid(output) == NULL) {
-        createGrid(output);
-    }
+    wlc_handle const output = wlc_view_get_output(view);
+    assert (getGrid(output) != NULL);  // grid already created by function output_created
 
     if (view >= windowCount) {
         windowCount *= 2;
@@ -279,7 +277,7 @@ struct Window* createWindow(wlc_handle view) {
     return window;
 }
 
-void destroyWindow(wlc_handle view) {
+void destroyWindow(wlc_handle const view) {
     struct Window* window = getWindow(view);
     if (window == NULL) {
         return;
@@ -312,7 +310,7 @@ void destroyWindow(wlc_handle view) {
     }
 }
 
-void viewResized(wlc_handle view) {
+void viewResized(wlc_handle const view) {
     struct Window* window = getWindow(view);
     if (window == NULL) {
         return;

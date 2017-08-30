@@ -59,12 +59,12 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
             return true;
 
         } else if (testKeystroke(&keystroke_terminal, mods, sym)) {
-            char* terminal = "konsole";
+            char terminal[] = "konsole";
             wlc_exec(terminal, (char* const[]){ terminal, NULL });
             return true;
 
         } else if (testKeystroke(&keystroke_ksysguard, mods, sym)) {
-            char* ksysguard = "ksysguard";
+            char ksysguard[] = "ksysguard";
             wlc_exec(ksysguard, (char* const[]){ ksysguard, NULL });
         }
     }

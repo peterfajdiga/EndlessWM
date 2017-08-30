@@ -7,6 +7,9 @@
 #include "mouse.h"
 
 
+#define STARTUP_SCRIPT_PATH "/.xprofile"
+
+
 
 static bool view_created(wlc_handle view) {
     wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
@@ -38,6 +41,20 @@ static void view_focus(wlc_handle view, bool focus) {
     }
 }
 
+static bool output_created(wlc_handle const output) {
+    return createGrid(output) != NULL;
+}
+
+// TODO: output destroyed
+
+// TODO: resolution changed
+
+static void runStartupScript() {
+    char* startupScriptPath = getHomeFilePath(STARTUP_SCRIPT_PATH);
+    system(startupScriptPath);
+    free(startupScriptPath);
+}
+
 int main(int argc, char *argv[]) {
     readConfig();
     grid_init();
@@ -52,6 +69,8 @@ int main(int argc, char *argv[]) {
     wlc_set_view_request_move_cb    (&view_request_move);
     wlc_set_view_request_resize_cb  (&view_request_resize);
     wlc_set_view_request_geometry_cb(&view_request_geometry);
+    wlc_set_output_created_cb       (&output_created);
+    wlc_set_compositor_ready_cb     (&runStartupScript);
 
     if (!wlc_init())
         return EXIT_FAILURE;

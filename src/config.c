@@ -4,7 +4,7 @@
 #include <glib.h>
 
 
-#define CONFIG_FILE "/.config/endlesswm"
+#define CONFIG_FILE_PATH "/.config/endlesswm"
 
 
 
@@ -35,13 +35,14 @@ static void initDefaults() {
 
 
 // needs to be freed afterwards
-static char* getConfigFilePath() {
+// relativeFilePath needs to be prefixed with '/'
+char* getHomeFilePath(const char* relativeFilePath) {
     char* homePath = getenv("HOME");
     const size_t homePathLength = strlen(homePath);
-    const size_t configFileNameLength = strlen(CONFIG_FILE);
+    const size_t configFileNameLength = strlen(relativeFilePath);
     char* retval = malloc(homePathLength + configFileNameLength + 1);
     strcpy(retval, homePath);
-    strcat(retval, CONFIG_FILE);
+    strcat(retval, relativeFilePath);
     return retval;
 }
 
@@ -81,7 +82,7 @@ void readConfig() {
     initDefaults();
     configFile = g_key_file_new();
     
-    char* configFilePath = getConfigFilePath();
+    char* configFilePath = getHomeFilePath(CONFIG_FILE_PATH);
 //     if (!g_key_file_load_from_file(configFile, configFilePath, G_KEY_FILE_NONE, NULL)){
 //         fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
 //     }

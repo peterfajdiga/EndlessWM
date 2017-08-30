@@ -33,4 +33,5 @@ struct Keystroke keystroke_moveWindowRight;
 struct Keystroke keystroke_moveRowBack;
 struct Keystroke keystroke_moveRowForward;
 
+char* getHomeFilePath(const char* relativeFilePath);
 void readConfig();
