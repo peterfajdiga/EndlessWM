@@ -13,36 +13,12 @@ static bool view_created(wlc_handle view) {
     wlc_view_bring_to_front(view);
     wlc_view_focus(view);
 
-    if (isGriddable(view)) {
-        createWindow(view);
-        struct Grid* grid = getGrid(wlc_view_get_output(view));
-        layoutGrid(grid);
-    }
+    createWindow(view);
     return true;
 }
 
 static void view_destroyed(wlc_handle view) {
-    if (isGriddable(view)) {
-        const struct Window *destroyedWindow = getWindow(view);
-        // focus next window
-        struct Window *nextWindow = destroyedWindow->next;
-        if (nextWindow == NULL) {
-            nextWindow = destroyedWindow->prev;
-        }
-        if (nextWindow == NULL) {
-            nextWindow = getWindowParallelNext(destroyedWindow);
-        }
-        if (nextWindow == NULL) {
-            nextWindow = getWindowParallelPrev(destroyedWindow);
-        }
-        if (nextWindow != NULL) {
-            wlc_view_focus(nextWindow->view);
-        }
-
-        struct Grid *grid = getGrid(wlc_view_get_output(view));
-        destroyWindow(view);
-        layoutGrid(grid);
-    }
+    destroyWindow(view);
 }
 
 static void view_request_move(wlc_handle view, const struct wlc_point* origin) {
@@ -54,12 +30,7 @@ static void view_request_resize(wlc_handle view, uint32_t edges, const struct wl
 }
 
 static void view_request_geometry(wlc_handle view, const struct wlc_geometry* g) {
-    if (isGriddable(view)) {
-        struct Window* window = getWindow(view);
-        assert (window != NULL);
-        layoutRow(window->parent);
-        layoutGridAt(window->parent);
-    }
+    viewResized(view);
 }
 
 static void view_focus(wlc_handle view, bool focus) {

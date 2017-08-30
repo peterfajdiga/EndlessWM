@@ -26,19 +26,37 @@ void grid_init() {
     }
 }
 
+static size_t getWindowsOccupancy() {
+    // TODO: Instead of iterating, just remember highest view handle
+    size_t const lowestShrinkThreshold = MIN_WINDOW_COUNT/2 - 1;
+    for (size_t i = windowCount - 1; i >= lowestShrinkThreshold; i--) {
+        if (windowsByView[i] != NULL) {
+            return i+1;
+        }
+    }
+    return lowestShrinkThreshold;  // or less, we don't care
+}
+
 
 
 // getters
 
-struct Grid* getGrid(wlc_handle output) {
+struct Grid* getGrid(wlc_handle const output) {
     if (output >= gridCount) {
         return NULL;
     }
     return gridsByOutput[output];
 }
 
+static wlc_handle getGriddableParentView(wlc_handle view) {
+    while (view > 0 && !isGriddable(view)) {
+        view = wlc_view_get_parent(view);
+    }
+    return view;
+}
+
 struct Window* getWindow(wlc_handle view) {
-    if (view >= windowCount) {
+    if (view >= windowCount || !isGriddable(view)) {
         return NULL;
     }
     return windowsByView[view];
@@ -226,6 +244,75 @@ void applyRowGeometry(struct Row* row) {
 
 // window operations
 
+struct Window* createWindow(wlc_handle view) {
+    if (!isGriddable(view)) {
+        return NULL;
+    }
+    wlc_handle output = wlc_view_get_output(view);
+    if (getGrid(output) == NULL) {
+        createGrid(output);
+    }
+
+    if (view >= windowCount) {
+        windowCount *= 2;
+        windowsByView = realloc(windowsByView, windowCount * sizeof(struct Window*));
+    }
+
+    struct Window* window = malloc(sizeof(struct Window));
+    window->prev = NULL;  // probably unnecessary
+    window->next = NULL;  // probably unnecessary
+    window->view = view;
+    window->size = getMaxRowLength(output);
+
+    windowsByView[view] = window;
+
+    struct Row* row = createRow(view);
+    addWindowToRow(window, row);
+    return window;
+}
+
+void destroyWindow(wlc_handle view) {
+    struct Window* window = getWindow(view);
+    if (window == NULL) {
+        return;
+    }
+
+    // focus next window
+    struct Window *nextWindow = window->next;
+    if (nextWindow == NULL) {
+        nextWindow = window->prev;
+    }
+    if (nextWindow == NULL) {
+        nextWindow = getWindowParallelNext(window);
+    }
+    if (nextWindow == NULL) {
+        nextWindow = getWindowParallelPrev(window);
+    }
+    if (nextWindow != NULL) {
+        wlc_view_focus(nextWindow->view);
+    }
+
+    // free
+    removeWindow(window);
+    free(window);
+
+    windowsByView[view] = NULL;
+    size_t const shrinkThreshold = windowCount / 4;
+    size_t const targetSize = windowCount / 2;
+    if (targetSize >= MIN_WINDOW_COUNT && getWindowsOccupancy() <= shrinkThreshold) {
+        windowsByView = realloc(windowsByView, targetSize * sizeof(struct Window*));
+    }
+}
+
+void viewResized(wlc_handle view) {
+    struct Window* window = getWindow(view);
+    if (window == NULL) {
+        return;
+    }
+    layoutRow(window->parent);
+    layoutGridAt(window->parent);
+}
+
 void addWindowToRow(struct Window* window, struct Row* row) {
     window->prev = row->lastWindow;
     window->next = NULL;
@@ -271,57 +358,6 @@ void removeWindow(struct Window* window) {
         assert (row->lastWindow != NULL);
         // otherwise layout it
         layoutRow(row);
-    }
-}
-
-struct Window* createWindow(wlc_handle view) {
-    wlc_handle output = wlc_view_get_output(view);
-    if (getGrid(output) == NULL) {
-        createGrid(output);
-    }
-    
-    if (view >= windowCount) {
-        windowCount *= 2;
-        windowsByView = realloc(windowsByView, windowCount * sizeof(struct Window*));
-    }
-
-    struct Window* window = malloc(sizeof(struct Window));
-    window->prev = NULL;  // probably unnecessary
-    window->next = NULL;  // probably unnecessary
-    window->view = view;
-    window->size = getMaxRowLength(output);
-    
-    windowsByView[view] = window;
-    
-    struct Row* row = createRow(view);
-    addWindowToRow(window, row);
-    return window;
-}
-
-static size_t getWindowsOccupancy() {
-    // TODO: Instead of iterating, just remember highest view handle
-    size_t const lowestShrinkThreshold = MIN_WINDOW_COUNT/2 - 1;
-    for (size_t i = windowCount - 1; i >= lowestShrinkThreshold; i--) {
-        if (windowsByView[i] != NULL) {
-            return i+1;
-        }
-    }
-    return lowestShrinkThreshold;  // or less, we don't care
-}
-
-void destroyWindow(wlc_handle view) {
-    struct Window* window = getWindow(view);
-    if (window == NULL) {
-        return;
-    }
-    removeWindow(window);
-    free(window);
-    
-    windowsByView[view] = NULL;
-    size_t const shrinkThreshold = windowCount / 4;
-    size_t const targetSize = windowCount / 2;
-    if (targetSize >= MIN_WINDOW_COUNT && getWindowsOccupancy() <= shrinkThreshold) {
-        windowsByView = realloc(windowsByView, targetSize * sizeof(struct Window*));
     }
 }
 
@@ -418,4 +454,64 @@ struct Window* getWindowRight(const struct Window* window) {
         return getWindowParallelNext(window);
     }
     return window->next;
+}
+
+
+
+// view management
+
+typedef struct Window* (*WindowNeighborGetter)(const struct Window* window);
+static void focusViewInner(wlc_handle const view, WindowNeighborGetter getNeighbor) {
+    const struct Window* currentWindow = getWindow(getGriddableParentView(view));
+    if (currentWindow == NULL) {
+        return;
+    }
+    const struct Window* targetWindow = getNeighbor(currentWindow);
+    if (targetWindow != NULL) {
+        wlc_view_focus(targetWindow->view);
+    }
+}
+void focusViewAbove(wlc_handle const view) {
+    focusViewInner(view, &getWindowAbove);
+}
+void focusViewBelow(wlc_handle const view) {
+    focusViewInner(view, &getWindowBelow);
+}
+void focusViewLeft(wlc_handle const view) {
+    focusViewInner(view, &getWindowLeft);
+}
+void focusViewRight(wlc_handle const view) {
+    focusViewInner(view, &getWindowRight);
+}
+
+void moveRowBack(wlc_handle const view) {
+    const struct Window* window = getWindow(view);
+    if (window == NULL) {
+        return;
+    }
+    struct Row* row = window->parent;
+    if (row->prev == NULL) {
+        // already at the top
+        return;
+    }
+    struct Grid* grid = row->parent;
+    struct Row* targetRow = row->prev->prev;
+    removeRow(row);
+    addRowToGridAfter(row, grid, targetRow);
+}
+
+void moveRowForward(wlc_handle const view) {
+    const struct Window* window = getWindow(view);
+    if (window == NULL) {
+        return;
+    }
+    struct Row* row = window->parent;
+    if (row->next == NULL) {
+        // already at the bottom
+        return;
+    }
+    struct Grid* grid = row->parent;
+    struct Row* targetRow = row->next;
+    removeRow(row);
+    addRowToGridAfter(row, grid, targetRow);
 }
