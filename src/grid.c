@@ -134,7 +134,7 @@ void addRowToGrid(struct Row* row, struct Grid* grid) {
 }
 
 void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev) {
-    // row must not yet be in a grid
+    // row must not yet be in a Grid
     assert (row->prev == NULL);
     assert (row->next == NULL);
     assert (row->parent == NULL);
@@ -203,6 +203,20 @@ struct Row* createRow(wlc_handle view) {
     addRowToGrid(row, grid);
     return row;
 }
+struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
+    struct Grid* grid = getGrid(wlc_view_get_output(view));
+
+    struct Row* row = malloc(sizeof(struct Row));
+    row->prev = NULL;         // probably unnecessary (except for asserts)
+    row->next = NULL;         // probably unnecessary (except for asserts)
+    row->firstWindow = NULL;
+    row->lastWindow = NULL;
+    row->parent = NULL;       // probably unnecessary (except for asserts)
+    row->size = DEFAULT_ROW_HEIGHT;
+
+    addRowToGridAfter(row, grid, prev);
+    return row;
+}
 
 void resizeWindowsIfNecessary(struct Row* row) {
     assert (row->firstWindow != NULL);  // rows are never empty
@@ -269,8 +283,9 @@ struct Window* createWindow(wlc_handle const view) {
     }
 
     struct Window* window = malloc(sizeof(struct Window));
-    window->prev = NULL;  // probably unnecessary
-    window->next = NULL;  // probably unnecessary
+    window->prev   = NULL;  // probably unnecessary (except for asserts)
+    window->next   = NULL;  // probably unnecessary (except for asserts)
+    window->parent = NULL;  // probably unnecessary (except for asserts)
     window->view = view;
     window->size = getMaxRowLength(output);
 
@@ -314,27 +329,48 @@ void destroyWindow(wlc_handle const view) {
     }
 }
 
-void viewResized(wlc_handle const view) {
+// returns true if resizing handled by grid
+bool viewResized(wlc_handle const view) {
     struct Window* window = getWindow(view);
     if (window == NULL) {
-        return;
+        return false;
     }
     layoutRow(window->parent);
     layoutGridAt(window->parent);
+    return true;
 }
 
 void addWindowToRow(struct Window* window, struct Row* row) {
-    window->prev = row->lastWindow;
-    window->next = NULL;
+    addWindowToRowAfter(window, row, row->lastWindow);
+}
+
+void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* prev) {
+    // window must not yet be in a Row
+    assert (window->prev == NULL);
+    assert (window->next == NULL);
+    assert (window->parent == NULL);
+
+    struct Window* next;
+    window->prev = prev;
     window->parent = row;
-    if (row->firstWindow == NULL) {
-        assert (row->lastWindow == NULL);
+    if (prev == NULL) {
+        // placing as firstWindow
+        next = row->firstWindow;
+        window->next = row->firstWindow;
         row->firstWindow = window;
     } else {
-        assert (row->lastWindow != NULL);
-        row->lastWindow->next = window;
+        assert (row->firstWindow != NULL);
+        assert (row->lastWindow  != NULL);
+        next = prev->next;
+        window->next = prev->next;
+        prev->next = window;
     }
-    row->lastWindow = window;
+    if (prev == row->lastWindow) {
+        row->lastWindow = window;
+    }
+    if (next != NULL) {
+        next->prev = window;
+    }
     layoutRow(row);
 }
 
@@ -342,8 +378,9 @@ void removeWindow(struct Window* window) {
     struct Row* row = window->parent;
     struct Window* left = window->prev;
     struct Window* right = window->next;
-    window->prev  = NULL;  // probably unnecessary
-    window->next = NULL;   // probably unnecessary
+    window->prev   = NULL;  // probably unnecessary (except for asserts)
+    window->next   = NULL;  // probably unnecessary (except for asserts)
+    window->parent = NULL;  // probably unnecessary (except for asserts)
     
     if (left != NULL) {
         left->next = right;
@@ -492,6 +529,65 @@ void focusViewLeft(wlc_handle const view) {
 }
 void focusViewRight(wlc_handle const view) {
     focusViewInner(view, &getWindowRight);
+}
+
+// returns true if correct action done
+static void moveViewInner(wlc_handle const view, WindowNeighborGetter const getNeighbor, bool const stayInRow) {
+    struct Window* const window = getWindow(view);
+    if (window == NULL) {
+        return;
+    }
+    struct Row* const row = window->parent;
+    bool const onlyChild = row->firstWindow == row->lastWindow;
+    assert (onlyChild == (row->firstWindow == window && row->lastWindow == window));
+
+    struct Window* targetWindow = getNeighbor(window);
+    if (stayInRow || onlyChild) {
+        if (targetWindow == NULL) {
+            // window already at edge, can't move further
+            // or
+            // window's own private row already at edge, can't move further
+            return;
+        }
+        struct Row* targetRow = targetWindow->parent;
+        if (stayInRow && targetWindow != window->next) {
+            targetWindow = targetWindow->prev;
+        }
+        removeWindow(window);
+        addWindowToRowAfter(window, targetRow, targetWindow);
+
+    } else {
+        struct Row* targetRow;
+        if (targetWindow == NULL) {
+            // put window into its own row which will be firstRow or lastRow
+            if (row->parent->firstRow == row) {
+                targetRow = NULL;
+            } else {
+                assert (row->parent->lastRow == row);
+                targetRow = row;
+            }
+        } else {
+            targetRow = targetWindow->parent;
+            if (targetRow == row->next) {
+                targetRow = row;
+            }
+        }
+        removeWindow(window);
+        struct Row* newRow = createRowAndPlaceAfter(view, targetRow);
+        addWindowToRow(window, newRow);
+    }
+}
+void moveViewUp(wlc_handle const view) {
+    moveViewInner(view, &getWindowAbove, grid_horizontal);
+}
+void moveViewDown(wlc_handle const view) {
+    moveViewInner(view, &getWindowBelow, grid_horizontal);
+}
+void moveViewLeft(wlc_handle const view) {
+    moveViewInner(view, &getWindowLeft, !grid_horizontal);
+}
+void moveViewRight(wlc_handle const view) {
+    moveViewInner(view, &getWindowRight, !grid_horizontal);
 }
 
 void moveRowBack(wlc_handle const view) {

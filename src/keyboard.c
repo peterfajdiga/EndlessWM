@@ -62,6 +62,22 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
                     moveRowForward(view);
                     return true;
 
+                } else if (testKeystroke(&keystroke_moveWindowUp, mods, sym)) {
+                    moveViewUp(view);
+                    return true;
+
+                } else if (testKeystroke(&keystroke_moveWindowDown, mods, sym)) {
+                    moveViewDown(view);
+                    return true;
+
+                } else if (testKeystroke(&keystroke_moveWindowLeft, mods, sym)) {
+                    moveViewLeft(view);
+                    return true;
+
+                } else if (testKeystroke(&keystroke_moveWindowRight, mods, sym)) {
+                    moveViewRight(view);
+                    return true;
+
                 }
             }
 

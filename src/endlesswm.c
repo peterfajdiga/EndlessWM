@@ -31,7 +31,9 @@ static void view_request_resize(wlc_handle view, uint32_t edges, const struct wl
 }
 
 static void view_request_geometry(wlc_handle view, const struct wlc_geometry* g) {
-    viewResized(view);
+    if (!viewResized(view)) {
+        wlc_view_set_geometry(view, 0, g);
+    }
 }
 
 static void view_focus(wlc_handle view, bool focus) {
