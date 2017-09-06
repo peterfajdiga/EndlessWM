@@ -124,7 +124,7 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
     return false;
 }
 
-bool pointer_motion(wlc_handle handle, uint32_t time, double x, double y) {
+bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
     // In order to give the compositor control of the pointer placement it needs
     // to be explicitly set after receiving the motion event:
     wlc_pointer_set_position_v2(x, y);

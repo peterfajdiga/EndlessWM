@@ -92,8 +92,12 @@ uint32_t getMaxRowLength(wlc_handle const output) {
 
 struct Grid* createGrid(wlc_handle output) {
     if (output >= gridCount) {
+        size_t oldGridCount = gridCount;
         gridCount = output + 1;
         gridsByOutput = realloc(gridsByOutput, gridCount * sizeof(struct Grid*));
+        for (size_t i = oldGridCount; i < output; i++) {
+            gridsByOutput[i] = NULL;
+        }
     }
     
     struct Grid* grid = malloc(sizeof(struct Grid));
@@ -122,6 +126,20 @@ void layoutGridAt(struct Row* row) {
         positionRow(row);
         applyRowGeometry(row);
         row = row->next;
+    }
+}
+
+static void clearGrid(struct Grid* grid) {
+    while (grid->firstRow != NULL) {
+        struct Row* row = grid->firstRow;
+        while (row->firstWindow != NULL) {
+            struct Window* window = row->firstWindow;
+            wlc_handle const view = window->view;
+            wlc_view_close(view);
+            destroyWindow(view);
+            // window is freed by function destroyWindow
+        }
+        // row is freed by function destroyWindow
     }
 }
 
@@ -620,4 +638,38 @@ void moveRowForward(wlc_handle const view) {
     struct Row* targetRow = row->next;
     removeRow(row);
     addRowToGridAfter(row, grid, targetRow);
+}
+
+
+
+// output management
+
+void evacuateOutput(wlc_handle const output) {
+    struct Grid* grid = getGrid(output);
+    if (grid == NULL) {
+        return;
+    }
+
+    // find target grid
+    struct Grid* targetGrid = NULL;
+    for (size_t i = 0; i < gridCount; i++) {
+        if (gridsByOutput[i] != NULL && gridsByOutput[i] != grid) {
+            targetGrid = gridsByOutput[i];
+            break;
+        }
+    }
+
+    if (targetGrid == NULL) {
+        // we can't evacuate anywhere, close all windows
+        clearGrid(grid);
+    } else {
+        // move all rows to targetGrid
+        while (grid->firstRow != NULL) {
+            struct Row* firstRow = grid->firstRow;
+            removeRow(firstRow);
+            addRowToGrid(firstRow, targetGrid);
+        }
+    }
+
+    destroyGrid(output);
 }

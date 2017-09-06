@@ -45,6 +45,7 @@ struct Grid* createGrid(wlc_handle output);
 void destroyGrid(wlc_handle output);
 static void layoutGrid(struct Grid* grid);
 static void layoutGridAt(struct Row* row);
+static void clearGrid(struct Grid* grid);
 
 // row operations
 static struct Row* createRow(wlc_handle view);  // creates a new Row to house the given view
@@ -92,3 +93,6 @@ void moveViewLeft(wlc_handle view);
 void moveViewRight(wlc_handle view);
 void moveRowBack(wlc_handle view);
 void moveRowForward(wlc_handle view);
+
+// output management
+void evacuateOutput(wlc_handle output);
