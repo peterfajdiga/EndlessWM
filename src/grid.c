@@ -91,6 +91,14 @@ uint32_t getMaxRowLength(wlc_handle const output) {
     }
 }
 
+uint32_t getPageLength(wlc_handle const output) {
+    if (grid_horizontal) {
+        return wlc_output_get_virtual_resolution(output)->w;
+    } else {
+        return wlc_output_get_virtual_resolution(output)->h;
+    }
+}
+
 
 
 // grid operations
@@ -457,20 +465,30 @@ void positionWindow(struct Window* window) {
 
 void applyWindowGeometry(struct Window* window) {
     struct Row* row = window->parent;
-    uint32_t offset = (uint32_t)round(row->parent->scroll);
+    uint32_t offset = -(uint32_t)round(row->parent->scroll);
     struct wlc_geometry geometry;
-    if (grid_horizontal) {
-        geometry.origin.x = row->origin + offset + grid_windowSpacing;
-        geometry.origin.y = window->origin + grid_windowSpacing;
-        geometry.size.w = row->size - grid_windowSpacing;
-        geometry.size.h = window->size - grid_windowSpacing;
-    } else {
-        geometry.origin.x = window->origin + grid_windowSpacing;
-        geometry.origin.y = row->origin + offset + grid_windowSpacing;
-        geometry.size.w = window->size - grid_windowSpacing;
-        geometry.size.h = row->size - grid_windowSpacing;
+
+    // hide offscreen views
+    const uint32_t pageLength = getPageLength(window->parent->parent->output);
+    const bool visible = (int32_t)(row->origin + offset) <= (int32_t)pageLength &&
+                         (int32_t)(row->origin + offset + row->size) >= 0;
+    wlc_view_set_mask(window->view, (uint32_t)visible);
+    
+    if (visible) {
+        // calculate geometry
+        if (grid_horizontal) {
+            geometry.origin.x = row->origin + offset + grid_windowSpacing;
+            geometry.origin.y = window->origin + grid_windowSpacing;
+            geometry.size.w = row->size - grid_windowSpacing;
+            geometry.size.h = window->size - grid_windowSpacing;
+        } else {
+            geometry.origin.x = window->origin + grid_windowSpacing;
+            geometry.origin.y = row->origin + offset + grid_windowSpacing;
+            geometry.size.w = window->size - grid_windowSpacing;
+            geometry.size.h = row->size - grid_windowSpacing;
+        }
+        wlc_view_set_geometry(window->view, 0, &geometry);
     }
-    wlc_view_set_geometry(window->view, 0, &geometry);
 }
 
 

@@ -41,6 +41,7 @@ bool isGriddable(wlc_handle view);
 bool isGridded(wlc_handle view);
 bool isFloating(wlc_handle view);
 uint32_t getMaxRowLength(wlc_handle output);
+uint32_t getPageLength(wlc_handle output);
 
 // grid operations
 struct Grid* createGrid(wlc_handle output);
