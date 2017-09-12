@@ -39,8 +39,11 @@ static void view_request_geometry(wlc_handle view, const struct wlc_geometry* g)
 
 static void view_focus(wlc_handle view, bool focus) {
     wlc_view_set_state(view, WLC_BIT_ACTIVATED, focus);
-    if (getWindow(view) == NULL) {
-        wlc_view_bring_to_front(view);
+    if (focus) {
+        if (getWindow(view) == NULL) {
+            wlc_view_bring_to_front(view);
+        }
+        scrollToView(view);
     }
 }
 

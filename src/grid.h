@@ -48,6 +48,7 @@ struct Grid* createGrid(wlc_handle output);
 void destroyGrid(wlc_handle output);
 static void layoutGrid(struct Grid* grid);
 static void layoutGridAt(struct Row* row);
+static void applyGridGeometry(struct Grid* grid);
 static void clearGrid(struct Grid* grid);
 
 // row operations
@@ -60,6 +61,7 @@ static void resizeWindowsIfNecessary(struct Row* row);
 static void layoutRow(struct Row* row);
 static void positionRow(struct Row* row);
 static void applyRowGeometry(struct Row* row);
+static void scrollToRow(const struct Row* row);
 
 // window operations
 struct Window* createWindow(wlc_handle view);
@@ -96,6 +98,7 @@ void moveViewLeft(wlc_handle view);
 void moveViewRight(wlc_handle view);
 void moveRowBack(wlc_handle view);
 void moveRowForward(wlc_handle view);
+void scrollToView(wlc_handle view);
 
 // output management
 void evacuateOutput(wlc_handle output);

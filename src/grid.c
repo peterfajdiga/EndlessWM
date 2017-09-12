@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <wlc/wlc-render.h>
 
 
 #define MIN_WINDOW_COUNT 32
@@ -93,9 +94,9 @@ uint32_t getMaxRowLength(wlc_handle const output) {
 
 uint32_t getPageLength(wlc_handle const output) {
     if (grid_horizontal) {
-        return wlc_output_get_virtual_resolution(output)->w;
+        return wlc_output_get_virtual_resolution(output)->w - grid_windowSpacing;
     } else {
-        return wlc_output_get_virtual_resolution(output)->h;
+        return wlc_output_get_virtual_resolution(output)->h - grid_windowSpacing;
     }
 }
 
@@ -153,6 +154,14 @@ void layoutGrid(struct Grid* grid) {
 void layoutGridAt(struct Row* row) {
     while (row != NULL) {
         positionRow(row);
+        applyRowGeometry(row);
+        row = row->next;
+    }
+}
+
+static void applyGridGeometry(struct Grid* grid) {
+    struct Row* row = grid->firstRow;
+    while (row != NULL) {
         applyRowGeometry(row);
         row = row->next;
     }
@@ -311,6 +320,55 @@ void applyRowGeometry(struct Row* row) {
         applyWindowGeometry(window);
         window = window->next;
     }
+}
+
+void scrollToRow(const struct Row* row) {
+    struct Grid* const grid = row->parent;
+    uint32_t const screenLength = getPageLength(grid->output);
+    double newScroll, scrollDelta;
+
+    int32_t const row_top = row->origin;
+    int32_t const row_btm = row_top + row->size;
+    int32_t const screen_top = (int32_t)grid->scroll;
+    int32_t const screen_btm = screen_top + screenLength;
+
+    int32_t const margin_top = row_top - screen_top;
+    int32_t const margin_btm = screen_btm - row_btm;
+
+    if (margin_top < 0) {
+        // row is above the screen
+        if (margin_btm < 0) {
+            // row is also below the screen, therefore it's already visible and there's no need to scroll
+            return;
+        }
+        // scroll up, so that row_top == screen_top
+        newScroll = (double)row_top;
+
+    } else if (margin_btm < 0) {
+        // row is below the screen
+        // scroll down, so that row_btm == screen_btm
+        newScroll = (double)(row_btm - screenLength);
+
+    } else {
+        assert(margin_top >= 0 && margin_btm >= 0);
+        // row visible, no need to scroll
+        return;
+    }
+
+    // do scroll
+    scrollDelta = newScroll - grid->scroll;
+    grid->scroll = newScroll;
+    applyGridGeometry(grid);
+
+    // also scroll pointer
+    double x, y;
+    wlc_pointer_get_position_v2(&x, &y);
+    if (grid_horizontal) {
+        x -= scrollDelta;
+    } else {
+        y -= scrollDelta;
+    }
+    wlc_pointer_set_position_v2(x, y);
 }
 
 
@@ -519,7 +577,7 @@ void scrollGrid(struct Grid* grid, double amount) {
             // grid is empty, can't scroll
             grid->scroll = 0.0;
         } else {
-            int32_t const overflow = (lastRow->origin + lastRow->size) - (getPageLength(grid->output) - grid_windowSpacing);
+            int32_t const overflow = (lastRow->origin + lastRow->size) - getPageLength(grid->output);
             if (overflow < 0) {
                 grid->scroll = 0.0;
             } else if (grid->scroll > overflow) {
@@ -695,6 +753,14 @@ void moveRowForward(wlc_handle const view) {
     struct Row* targetRow = row->next;
     removeRow(row);
     addRowToGridAfter(row, grid, targetRow);
+}
+
+void scrollToView(wlc_handle const view) {
+    const struct Window* window = getWindow(getGriddedParentView(view));
+    if (window == NULL) {
+        return;
+    }
+    scrollToRow(window->parent);
 }
 
 
