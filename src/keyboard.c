@@ -13,6 +13,9 @@ bool testKeystroke(const struct Keystroke* const keystroke, uint32_t const mods,
 
 void sendKey(wlc_handle const view, const struct Keystroke* const keystroke) {
     struct wl_client* const client = wlc_view_get_wl_client(view);
+    if (client == NULL) {
+        return;
+    }
     struct wl_resource* const client_pointer = wl_client_get_object(client, 14);
     if (client_pointer == NULL) {
         return;

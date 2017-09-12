@@ -34,6 +34,9 @@ static wlc_handle movedView = 0;
 
 void sendButton(wlc_handle const view, uint32_t const button) {
     struct wl_client* const client = wlc_view_get_wl_client(view);
+    if (client == NULL) {
+        return;
+    }
     struct wl_resource* const client_pointer = wl_client_get_object(client, 13);
     if (client_pointer == NULL) {
         return;
