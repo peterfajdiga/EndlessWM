@@ -14,7 +14,7 @@ static void initDefaults() {
     grid_horizontal = false;
     grid_minimizeEmptySpace = true;
     grid_floatingDialogs = true;
-    grid_windowSpacing = 16;
+    grid_windowSpacing = 6;
 
     // Keybindings
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};

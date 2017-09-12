@@ -473,7 +473,7 @@ void applyWindowGeometry(struct Window* window) {
     const bool visible = (int32_t)(row->origin + offset) <= (int32_t)pageLength &&
                          (int32_t)(row->origin + offset + row->size) >= 0;
     wlc_view_set_mask(window->view, (uint32_t)visible);
-    
+
     if (visible) {
         // calculate geometry
         if (grid_horizontal) {
@@ -511,6 +511,22 @@ void printGrid(const struct Grid* grid) {
 
 void scrollGrid(struct Grid* grid, double amount) {
     grid->scroll += amount;
+    if (grid->scroll < 0.0) {
+        grid->scroll = 0.0;
+    } else {
+        const struct Row* const lastRow = grid->lastRow;
+        if (lastRow == NULL) {
+            // grid is empty, can't scroll
+            grid->scroll = 0.0;
+        } else {
+            int32_t const overflow = (lastRow->origin + lastRow->size) - (getPageLength(grid->output) - grid_windowSpacing);
+            if (overflow < 0) {
+                grid->scroll = 0.0;
+            } else if (grid->scroll > overflow) {
+                grid->scroll = overflow;
+            }
+        }
+    }
     layoutGrid(grid);
 }
 
@@ -519,6 +535,7 @@ void scrollGrid(struct Grid* grid, double amount) {
 // neighboring Windows
 
 struct Window* getWindowParallelPrev(const struct Window* window) {
+    // TODO: determine closest
     if (window->parent->prev == NULL) {
         return NULL;
     }
@@ -526,6 +543,7 @@ struct Window* getWindowParallelPrev(const struct Window* window) {
 }
 
 struct Window* getWindowParallelNext(const struct Window* window) {
+    // TODO: determine closest
     if (window->parent->next == NULL) {
         return NULL;
     }
