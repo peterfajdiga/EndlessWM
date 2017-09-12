@@ -85,9 +85,9 @@ bool isFloating(wlc_handle const view) {
 
 uint32_t getMaxRowLength(wlc_handle const output) {
     if (grid_horizontal) {
-        return wlc_output_get_virtual_resolution(output)->h;
+        return wlc_output_get_virtual_resolution(output)->h - grid_windowSpacing;
     } else {
-        return wlc_output_get_virtual_resolution(output)->w;
+        return wlc_output_get_virtual_resolution(output)->w - grid_windowSpacing;
     }
 }
 
@@ -460,15 +460,15 @@ void applyWindowGeometry(struct Window* window) {
     uint32_t offset = (uint32_t)round(row->parent->scroll);
     struct wlc_geometry geometry;
     if (grid_horizontal) {
-        geometry.origin.x = row->origin + offset;
-        geometry.origin.y = window->origin;
-        geometry.size.w = row->size;
-        geometry.size.h = window->size;
+        geometry.origin.x = row->origin + offset + grid_windowSpacing;
+        geometry.origin.y = window->origin + grid_windowSpacing;
+        geometry.size.w = row->size - grid_windowSpacing;
+        geometry.size.h = window->size - grid_windowSpacing;
     } else {
-        geometry.origin.x = window->origin;
-        geometry.origin.y = row->origin + offset;
-        geometry.size.w = window->size;
-        geometry.size.h = row->size;
+        geometry.origin.x = window->origin + grid_windowSpacing;
+        geometry.origin.y = row->origin + offset + grid_windowSpacing;
+        geometry.size.w = window->size - grid_windowSpacing;
+        geometry.size.h = row->size - grid_windowSpacing;
     }
     wlc_view_set_geometry(window->view, 0, &geometry);
 }

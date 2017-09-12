@@ -15,6 +15,7 @@
 bool grid_horizontal;
 bool grid_minimizeEmptySpace;
 bool grid_floatingDialogs;
+uint32_t grid_windowSpacing;
 
 // Keybindings
 struct Keystroke keystroke_terminate;
