@@ -29,6 +29,11 @@ void grid_init() {
     }
 }
 
+void grid_free() {
+    free(windowsByView);
+    free(gridsByOutput);
+}
+
 static size_t getWindowsOccupancy() {
     // TODO: Instead of iterating, just remember highest view handle
     size_t const lowestShrinkThreshold = MIN_WINDOW_COUNT/2 - 1;

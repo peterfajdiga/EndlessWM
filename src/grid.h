@@ -32,6 +32,7 @@ struct Window {
 };
 
 void grid_init();
+void grid_free();
 
 // getters
 struct Grid* getGrid(wlc_handle output);
