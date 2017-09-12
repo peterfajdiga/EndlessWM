@@ -16,7 +16,7 @@ set(SOURCE_FILES
         src/mouse.c
         src/mouse.h)
 
-add_executable(endlesswm ${SOURCE_FILES} src/mouse.c src/mouse.h)
+add_executable(endlesswm ${SOURCE_FILES})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED wlc wayland-server x11 glib-2.0)

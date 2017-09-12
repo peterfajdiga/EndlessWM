@@ -9,6 +9,7 @@ struct Grid {
     struct Row* lastRow;
     wlc_handle output;
     double scroll;
+    uint32_t* wallpaper;  // TODO: Do in a client
 };
 
 struct Row {

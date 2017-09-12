@@ -1,10 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "config.h"
 #include "grid.h"
 #include "keyboard.h"
 #include "mouse.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <wlc/wlc-render.h>
 
 
 #define STARTUP_SCRIPT_PATH "/.xprofile"
@@ -47,9 +48,23 @@ static bool output_created(wlc_handle const output) {
     return createGrid(output) != NULL;
 }
 
-// TODO: output destroyed
+static void output_destroyed(wlc_handle const output) {
+    destroyGrid(output);
+}
 
 // TODO: resolution changed
+
+static void output_render_pre(wlc_handle const output) {
+    // wallpaper (this should be done in a client, but I'm lazy)
+    struct Grid* grid = getGrid(output);
+    assert (grid != NULL);
+    if (grid->wallpaper != NULL) {
+        struct wlc_geometry geom;
+        geom.origin = (struct wlc_point) {0, 0};
+        geom.size = *wlc_output_get_resolution(output);
+        wlc_pixels_write(WLC_RGBA8888, &geom, grid->wallpaper);
+    }
+}
 
 static void runStartupScript() {
     char* startupScriptPath = getHomeFilePath(STARTUP_SCRIPT_PATH);
@@ -72,7 +87,9 @@ int main(int argc, char *argv[]) {
     wlc_set_view_request_resize_cb  (&view_request_resize);
     wlc_set_view_request_geometry_cb(&view_request_geometry);
     wlc_set_output_created_cb       (&output_created);
+    wlc_set_output_destroyed_cb     (&output_destroyed);
     wlc_set_compositor_ready_cb     (&runStartupScript);
+    wlc_set_output_render_pre_cb    (&output_render_pre);
 
     if (!wlc_init())
         return EXIT_FAILURE;

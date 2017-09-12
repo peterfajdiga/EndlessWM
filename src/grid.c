@@ -105,6 +105,18 @@ struct Grid* createGrid(wlc_handle output) {
     grid->lastRow = NULL;
     grid->output = output;
     grid->scroll = 0.0;
+
+    // wallpaper (this should be done in a client, but I'm lazy)
+    const struct wlc_size* resolution = wlc_output_get_resolution(output);
+    uint32_t const width = resolution->w;
+    uint32_t const height = resolution->h;
+    grid->wallpaper = malloc(width * height * sizeof(uint32_t));
+    for (size_t y = 0; y < height; y++) {
+        size_t startX = y * width;
+        for (size_t x = 0; x < width; x++) {
+            grid->wallpaper[startX + x] = 0xff804000;
+        }
+    }
     
     gridsByOutput[output] = grid;
     return grid;
@@ -112,6 +124,10 @@ struct Grid* createGrid(wlc_handle output) {
 
 void destroyGrid(wlc_handle output) {
     struct Grid* grid = getGrid(output);
+    assert (grid != NULL);
+    if (grid->wallpaper != NULL) {
+        free(grid->wallpaper);
+    }
     free(grid);
     gridsByOutput[output] = NULL;
     // probably no need to shrink the array, people don't have THAT many screens
