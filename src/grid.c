@@ -257,6 +257,7 @@ struct Row* createRow(wlc_handle view) {
     row->lastWindow = NULL;
     row->parent = NULL;       // probably unnecessary (except for asserts)
     row->size = rowSize;
+    row->preferredSize = rowSize;
     
     addRowToGrid(row, grid);
     return row;
@@ -283,18 +284,21 @@ void resizeWindowsIfNecessary(struct Row* row) {
     assert (row->firstWindow != NULL);  // rows are never empty
     assert (row->lastWindow  != NULL);  // rows are never empty
     uint32_t windowsSizeSum = 0;
+    uint32_t windowsPreferredSizeSum = 0;
     uint32_t maxRowLength = getMaxRowLength(row->parent->output);
     struct Window* window = row->firstWindow;
     while (window != NULL) {
         windowsSizeSum += window->size;
+        windowsPreferredSizeSum += window->preferredSize;
         maxRowLength -= grid_windowSpacing;
+        window->size = window->preferredSize;
         window = window->next;
     }
-    if (windowsSizeSum > maxRowLength || grid_minimizeEmptySpace) {
-        double ratio = (double)maxRowLength / windowsSizeSum;
+    if (windowsPreferredSizeSum > maxRowLength || grid_minimizeEmptySpace) {
+        double ratio = (double)maxRowLength / windowsPreferredSizeSum;
         window = row->firstWindow;
         while (window != NULL) {
-            window->size *= ratio;
+            window->size = (uint32_t)round(window->preferredSize * ratio);
             window = window->next;
         }
     }
@@ -400,6 +404,7 @@ struct Window* createWindow(wlc_handle const view) {
     window->parent = NULL;  // probably unnecessary (except for asserts)
     window->view = view;
     window->size = windowSize;
+    window->preferredSize = windowSize;
 
     windowsByView[view] = window;
 
@@ -464,6 +469,7 @@ void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* 
     struct Window* next;
     window->prev = prev;
     window->parent = row;
+    window->size = window->preferredSize;
     if (prev == NULL) {
         // placing as firstWindow
         next = row->firstWindow;

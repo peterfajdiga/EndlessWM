@@ -20,6 +20,7 @@ struct Row {
     struct Grid* parent;
     uint32_t origin;
     uint32_t size;
+    uint32_t preferredSize;
 };
 
 struct Window {
@@ -29,6 +30,7 @@ struct Window {
     struct Row* parent;
     uint32_t origin;
     uint32_t size;
+    uint32_t preferredSize;
 };
 
 void grid_init();
