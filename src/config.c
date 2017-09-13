@@ -12,7 +12,7 @@
 static void initDefaults() {
     // Grid
     grid_horizontal = false;
-    grid_minimizeEmptySpace = true;
+    grid_minimizeEmptySpace = false;
     grid_floatingDialogs = true;
     grid_windowSpacing = 6;
 

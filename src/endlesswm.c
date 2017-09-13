@@ -98,5 +98,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
 
     wlc_run();
+    grid_free();
     return EXIT_SUCCESS;
 }

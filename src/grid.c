@@ -8,7 +8,6 @@
 
 
 #define MIN_WINDOW_COUNT 32
-#define DEFAULT_ROW_HEIGHT 200
 
 
 
@@ -247,6 +246,9 @@ void removeRow(struct Row* row) {
 // creates a new Row to house view
 struct Row* createRow(wlc_handle view) {
     struct Grid* grid = getGrid(wlc_view_get_output(view));
+
+    struct wlc_size const viewSize = wlc_view_get_geometry(view)->size;
+    uint32_t rowSize = grid_horizontal ? viewSize.w : viewSize.h;
     
     struct Row* row = malloc(sizeof(struct Row));
     row->prev = NULL;         // probably unnecessary (except for asserts)
@@ -254,7 +256,7 @@ struct Row* createRow(wlc_handle view) {
     row->firstWindow = NULL;
     row->lastWindow = NULL;
     row->parent = NULL;       // probably unnecessary (except for asserts)
-    row->size = DEFAULT_ROW_HEIGHT;
+    row->size = rowSize;
     
     addRowToGrid(row, grid);
     return row;
@@ -262,13 +264,16 @@ struct Row* createRow(wlc_handle view) {
 struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
     struct Grid* grid = getGrid(wlc_view_get_output(view));
 
+    struct wlc_size const viewSize = wlc_view_get_geometry(view)->size;
+    uint32_t rowSize = grid_horizontal ? viewSize.w : viewSize.h;
+
     struct Row* row = malloc(sizeof(struct Row));
     row->prev = NULL;         // probably unnecessary (except for asserts)
     row->next = NULL;         // probably unnecessary (except for asserts)
     row->firstWindow = NULL;
     row->lastWindow = NULL;
     row->parent = NULL;       // probably unnecessary (except for asserts)
-    row->size = DEFAULT_ROW_HEIGHT;
+    row->size = rowSize;
 
     addRowToGridAfter(row, grid, prev);
     return row;
@@ -282,35 +287,34 @@ void resizeWindowsIfNecessary(struct Row* row) {
     struct Window* window = row->firstWindow;
     while (window != NULL) {
         windowsSizeSum += window->size;
+        maxRowLength -= grid_windowSpacing;
         window = window->next;
     }
     if (windowsSizeSum > maxRowLength || grid_minimizeEmptySpace) {
         double ratio = (double)maxRowLength / windowsSizeSum;
         window = row->firstWindow;
-        uint32_t origin = 0;
-        while (window != row->lastWindow) {
-            window->origin = origin;
+        while (window != NULL) {
             window->size *= ratio;
-            origin += window->size;
             window = window->next;
         }
-        // avoid rounding errors (would be off by one pixel)
-        assert (window == row->lastWindow);
-        window->origin = origin;
-        window->size = maxRowLength - origin;
     }
 }
 
 void layoutRow(struct Row* row) {
     resizeWindowsIfNecessary(row);
+    struct Window* window = row->firstWindow;
+    while (window != NULL) {
+        positionWindow(window);
+        window = window->next;
+    }
     applyRowGeometry(row);
 }
 
 void positionRow(struct Row* row) {
     if (row->prev == NULL) {
-        row->origin = 0;
+        row->origin = grid_windowSpacing;
     } else {
-        row->origin = row->prev->origin + row->prev->size;
+        row->origin = row->prev->origin + grid_windowSpacing + row->prev->size;
     }
 }
 
@@ -387,12 +391,15 @@ struct Window* createWindow(wlc_handle const view) {
         windowsByView = realloc(windowsByView, windowCount * sizeof(struct Window*));
     }
 
+    struct wlc_size const viewSize = wlc_view_get_geometry(view)->size;
+    uint32_t windowSize = grid_horizontal ? viewSize.h : viewSize.w;
+
     struct Window* window = malloc(sizeof(struct Window));
     window->prev   = NULL;  // probably unnecessary (except for asserts)
     window->next   = NULL;  // probably unnecessary (except for asserts)
     window->parent = NULL;  // probably unnecessary (except for asserts)
     window->view = view;
-    window->size = getMaxRowLength(output);
+    window->size = windowSize;
 
     windowsByView[view] = window;
 
@@ -436,12 +443,11 @@ void destroyWindow(wlc_handle const view) {
 
 // returns true if resizing handled by grid
 bool viewResized(wlc_handle const view) {
+    // TODO: Remove if unneeded
     struct Window* window = getWindow(view);
     if (window == NULL) {
         return false;
     }
-    layoutRow(window->parent);
-    layoutGridAt(window->parent);
     return true;
 }
 
@@ -515,9 +521,9 @@ void removeWindow(struct Window* window) {
 
 void positionWindow(struct Window* window) {
     if (window->prev == NULL) {
-        window->origin = 0;
+        window->origin = grid_windowSpacing;
     } else {
-        window->origin = window->prev->origin + window->prev->size;
+        window->origin = window->prev->origin + grid_windowSpacing + window->prev->size;
     }
 }
 
@@ -535,15 +541,15 @@ void applyWindowGeometry(struct Window* window) {
     if (visible) {
         // calculate geometry
         if (grid_horizontal) {
-            geometry.origin.x = row->origin + offset + grid_windowSpacing;
-            geometry.origin.y = window->origin + grid_windowSpacing;
-            geometry.size.w = row->size - grid_windowSpacing;
-            geometry.size.h = window->size - grid_windowSpacing;
+            geometry.origin.x = row->origin + offset;
+            geometry.origin.y = window->origin;
+            geometry.size.w = row->size;
+            geometry.size.h = window->size;
         } else {
-            geometry.origin.x = window->origin + grid_windowSpacing;
-            geometry.origin.y = row->origin + offset + grid_windowSpacing;
-            geometry.size.w = window->size - grid_windowSpacing;
-            geometry.size.h = row->size - grid_windowSpacing;
+            geometry.origin.x = window->origin;
+            geometry.origin.y = row->origin + offset;
+            geometry.size.w = window->size;
+            geometry.size.h = row->size;
         }
         wlc_view_set_geometry(window->view, 0, &geometry);
     }
