@@ -25,7 +25,8 @@ static void setMouseModActionPerformed(enum MouseModState* outState) {
 
 static enum MouseState {
     NORMAL,
-    MOVING_FLOATING
+    MOVING_FLOATING,
+    RESIZING_FLOATING
 } mouseState = NORMAL;
 
 static double prevMouseX, prevMouseY;
@@ -77,6 +78,16 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
                         return true;
                     }
 
+                    if (testKeystroke(&mousestroke_resize, mods, button)) {
+                        if (isFloating(view)) {
+                            mouseState = RESIZING_FLOATING;
+                            movedView = view;
+                            wlc_view_bring_to_front(movedView);
+                            setMouseModActionPerformed(&mouseBackMod);
+                            return true;
+                        }
+                    }
+
                     wlc_view_focus(view);
                 }
 
@@ -97,6 +108,12 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
 
         case MOVING_FLOATING: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_LEFT) {
+                mouseState = NORMAL;
+            }
+        }
+
+        case RESIZING_FLOATING: {
+            if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
                 mouseState = NORMAL;
             }
         }
@@ -143,6 +160,16 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             wlc_view_set_geometry(movedView, 0, &geom_new);
             break;
         }
+        case RESIZING_FLOATING: {
+            // TODO: Enable resizing in all directions (all edges)
+            const struct wlc_geometry* geom_start = wlc_view_get_geometry(movedView);
+            struct wlc_geometry geom_new;
+            geom_new.origin = geom_start->origin;
+            geom_new.size.w = geom_start->size.w + (uint32_t)round(x - prevMouseX);
+            geom_new.size.h = geom_start->size.h + (uint32_t)round(y - prevMouseY);
+            wlc_view_set_geometry(movedView, WLC_RESIZE_EDGE_BOTTOM_RIGHT, &geom_new);
+            break;
+        }
     }
 
     prevMouseX = x;
@@ -151,7 +178,14 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
 }
 
 bool pointer_scroll(wlc_handle view, uint32_t time, const struct wlc_modifiers* modifiers, uint8_t axis_bits, double amount[2]) {
-    uint32_t const mods = modifiers->mods;
+    uint32_t mods = modifiers->mods;
+
+    if (mouseBackMod > UNPRESSED) {
+        mods |= MOD_WM0;
+    }
+    if (mouseForwardMod > UNPRESSED) {
+        mods |= MOD_WM1;
+    }
 
     if (mods == MOD_WM0) {
         wlc_handle output = wlc_get_focused_output();
@@ -160,4 +194,8 @@ bool pointer_scroll(wlc_handle view, uint32_t time, const struct wlc_modifiers* 
     }
 
     return false;
+}
+
+void mouseHandleViewClosed(wlc_handle view) {
+    mouseState = NORMAL;
 }

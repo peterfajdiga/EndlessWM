@@ -20,6 +20,7 @@ static bool view_created(wlc_handle view) {
 }
 
 static void view_destroyed(wlc_handle view) {
+    mouseHandleViewClosed(view);
     destroyWindow(view);
 }
 

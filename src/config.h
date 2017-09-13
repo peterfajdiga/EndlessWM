@@ -36,6 +36,7 @@ struct Keystroke keystroke_moveRowForward;
 
 // Mousebindings
 struct Keystroke mousestroke_move;
+struct Keystroke mousestroke_resize;
 
 char* getHomeFilePath(const char* relativeFilePath);
 void readConfig();

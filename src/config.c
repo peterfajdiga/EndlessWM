@@ -33,8 +33,9 @@ static void initDefaults() {
     keystroke_moveRowBack        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
     keystroke_moveRowForward     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
 
-    // Mousebindings
-    mousestroke_move = (struct Keystroke){MOD_WM0, BTN_LEFT};
+    // Mousebindings (not configurable)
+    mousestroke_move   = (struct Keystroke){MOD_WM0, BTN_LEFT};
+    mousestroke_resize = (struct Keystroke){MOD_WM0, BTN_RIGHT};
 }
 
 
