@@ -26,7 +26,9 @@ static void setMouseModActionPerformed(enum MouseModState* outState) {
 static enum MouseState {
     NORMAL,
     MOVING_FLOATING,
-    RESIZING_FLOATING
+    RESIZING_FLOATING,
+    MOVING_GRIDDED,
+    RESIZING_GRIDDED
 } mouseState = NORMAL;
 
 static double prevMouseX, prevMouseY;
@@ -70,22 +72,28 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
 
                     // view-related mouse events
 
-                    if (testKeystroke(&mousestroke_move, mods, button) && isFloating(view)) {
-                        mouseState = MOVING_FLOATING;
+                    if (testKeystroke(&mousestroke_move, mods, button)) {
                         movedView = view;
-                        wlc_view_bring_to_front(movedView);
                         setMouseModActionPerformed(&mouseBackMod);
+                        if (isFloating(view)) {
+                            mouseState = MOVING_FLOATING;
+                            wlc_view_bring_to_front(movedView);
+                        } else {
+                            mouseState = MOVING_GRIDDED;
+                        }
                         return true;
                     }
 
                     if (testKeystroke(&mousestroke_resize, mods, button)) {
+                        movedView = view;
+                        setMouseModActionPerformed(&mouseBackMod);
                         if (isFloating(view)) {
                             mouseState = RESIZING_FLOATING;
-                            movedView = view;
                             wlc_view_bring_to_front(movedView);
-                            setMouseModActionPerformed(&mouseBackMod);
-                            return true;
+                        } else {
+                            mouseState = RESIZING_GRIDDED;
                         }
+                        return true;
                     }
 
                     wlc_view_focus(view);
@@ -106,13 +114,15 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
             break;
         }
 
-        case MOVING_FLOATING: {
+        case MOVING_FLOATING:
+        case MOVING_GRIDDED: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_LEFT) {
                 mouseState = NORMAL;
             }
         }
 
-        case RESIZING_FLOATING: {
+        case RESIZING_FLOATING:
+        case RESIZING_GRIDDED: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
                 mouseState = NORMAL;
             }
@@ -168,6 +178,34 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             geom_new.size.w = geom_start->size.w + (uint32_t)round(x - prevMouseX);
             geom_new.size.h = geom_start->size.h + (uint32_t)round(y - prevMouseY);
             wlc_view_set_geometry(movedView, WLC_RESIZE_EDGE_BOTTOM_RIGHT, &geom_new);
+            break;
+        }
+        case MOVING_GRIDDED: {
+            // TODO
+            break;
+        }
+        case RESIZING_GRIDDED: {
+            // TODO: Resize by edges, not by windows
+            // TODO: Make other windows smaller if necessary
+            struct Window* window = getWindow(movedView);
+            assert (window != NULL);  // because of condition for RESIZING_GRIDDED
+            struct Row* row = window->parent;
+
+            if (grid_horizontal) {
+                window->size += (uint32_t)round(y - prevMouseY);
+                row->size    += (uint32_t)round(x - prevMouseX);
+            } else {
+                window->size += (uint32_t)round(x - prevMouseX);
+                row->size    += (uint32_t)round(y - prevMouseY);
+            }
+            window->preferredSize = window->size;
+            row->preferredSize = row->size;
+
+            // apply new geometry
+            layoutRow(row);
+            if (row->next != NULL) {
+                layoutGridAt(row->next);
+            }
             break;
         }
     }

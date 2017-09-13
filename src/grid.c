@@ -280,7 +280,7 @@ struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
     return row;
 }
 
-void resizeWindowsIfNecessary(struct Row* row) {
+void resizeWindowsIfNecessary(struct Row* const row) {
     assert (row->firstWindow != NULL);  // rows are never empty
     assert (row->lastWindow  != NULL);  // rows are never empty
     uint32_t windowsSizeSum = 0;
@@ -302,10 +302,10 @@ void resizeWindowsIfNecessary(struct Row* row) {
             window = window->next;
         }
     }
+    layoutRow(row);
 }
 
 void layoutRow(struct Row* row) {
-    resizeWindowsIfNecessary(row);
     struct Window* window = row->firstWindow;
     while (window != NULL) {
         positionWindow(window);
@@ -488,7 +488,7 @@ void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* 
     if (next != NULL) {
         next->prev = window;
     }
-    layoutRow(row);
+    resizeWindowsIfNecessary(row);
 }
 
 void removeWindow(struct Window* window) {
@@ -520,8 +520,8 @@ void removeWindow(struct Window* window) {
         free(row);
     } else {
         assert (row->lastWindow != NULL);
-        // otherwise layout it
-        layoutRow(row);
+        // otherwise recalculate window sizes and positions
+        resizeWindowsIfNecessary(row);
     }
 }
 
