@@ -677,7 +677,7 @@ void focusViewRight(wlc_handle const view) {
 }
 
 // returns true if correct action done
-static void moveViewInner(wlc_handle const view, WindowNeighborGetter const getNeighbor, bool const stayInRow) {
+static void moveViewInner(wlc_handle const view, WindowNeighborGetter const getNeighbor, bool const stayInRow, bool const forward) {
     struct Window* const window = getWindow(view);
     if (window == NULL) {
         return;
@@ -686,8 +686,8 @@ static void moveViewInner(wlc_handle const view, WindowNeighborGetter const getN
     bool const onlyChild = row->firstWindow == row->lastWindow;
     assert (onlyChild == (row->firstWindow == window && row->lastWindow == window));
 
-    struct Window* targetWindow = getNeighbor(window);
     if (stayInRow || onlyChild) {
+        struct Window* targetWindow = getNeighbor(window);
         if (targetWindow == NULL) {
             // window already at edge, can't move further
             // or
@@ -702,37 +702,23 @@ static void moveViewInner(wlc_handle const view, WindowNeighborGetter const getN
         addWindowToRowAfter(window, targetRow, targetWindow);
 
     } else {
-        struct Row* targetRow;
-        if (targetWindow == NULL) {
-            // put window into its own row which will be firstRow or lastRow
-            if (row->parent->firstRow == row) {
-                targetRow = NULL;
-            } else {
-                assert (row->parent->lastRow == row);
-                targetRow = row;
-            }
-        } else {
-            targetRow = targetWindow->parent;
-            if (targetRow == row->next) {
-                targetRow = row;
-            }
-        }
+        // put window into its own row
         removeWindow(window);
-        struct Row* newRow = createRowAndPlaceAfter(view, targetRow);
+        struct Row* newRow = createRowAndPlaceAfter(view, forward ? row : row->prev);
         addWindowToRow(window, newRow);
     }
 }
 void moveViewUp(wlc_handle const view) {
-    moveViewInner(view, &getWindowAbove, grid_horizontal);
+    moveViewInner(view, &getWindowAbove, grid_horizontal, false);
 }
 void moveViewDown(wlc_handle const view) {
-    moveViewInner(view, &getWindowBelow, grid_horizontal);
+    moveViewInner(view, &getWindowBelow, grid_horizontal, true);
 }
 void moveViewLeft(wlc_handle const view) {
-    moveViewInner(view, &getWindowLeft, !grid_horizontal);
+    moveViewInner(view, &getWindowLeft, !grid_horizontal, false);
 }
 void moveViewRight(wlc_handle const view) {
-    moveViewInner(view, &getWindowRight, !grid_horizontal);
+    moveViewInner(view, &getWindowRight, !grid_horizontal, true);
 }
 
 void moveRowBack(wlc_handle const view) {
