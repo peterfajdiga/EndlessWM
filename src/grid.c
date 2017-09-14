@@ -244,6 +244,31 @@ void removeRow(struct Row* row) {
     ensureSensibleScroll(grid);
 }
 
+void resizeWindowsIfNecessary(struct Row* const row) {
+    assert (row->firstWindow != NULL);  // rows are never empty
+    assert (row->lastWindow  != NULL);  // rows are never empty
+    uint32_t windowsSizeSum = 0;
+    uint32_t windowsPreferredSizeSum = 0;
+    uint32_t maxRowLength = getMaxRowLength(row->parent->output);
+    struct Window* window = row->firstWindow;
+    while (window != NULL) {
+        windowsSizeSum += window->size;
+        windowsPreferredSizeSum += window->preferredSize;
+        maxRowLength -= grid_windowSpacing;
+        window->size = window->preferredSize;
+        window = window->next;
+    }
+    if (windowsPreferredSizeSum > maxRowLength || grid_minimizeEmptySpace) {
+        double ratio = (double)maxRowLength / windowsPreferredSizeSum;
+        window = row->firstWindow;
+        while (window != NULL) {
+            window->size = (uint32_t)round(window->preferredSize * ratio);
+            window = window->next;
+        }
+    }
+    layoutRow(row);
+}
+
 // creates a new Row to house view
 struct Row* createRow(wlc_handle view) {
     struct Grid* grid = getGrid(wlc_view_get_output(view));
@@ -281,34 +306,9 @@ struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
     return row;
 }
 
-bool isLastRow(struct Row* row) {
+bool isLastRow(const struct Row* row) {
     // TODO: Remove if unneeded
     return row->parent->lastRow == row;
-}
-
-void resizeWindowsIfNecessary(struct Row* const row) {
-    assert (row->firstWindow != NULL);  // rows are never empty
-    assert (row->lastWindow  != NULL);  // rows are never empty
-    uint32_t windowsSizeSum = 0;
-    uint32_t windowsPreferredSizeSum = 0;
-    uint32_t maxRowLength = getMaxRowLength(row->parent->output);
-    struct Window* window = row->firstWindow;
-    while (window != NULL) {
-        windowsSizeSum += window->size;
-        windowsPreferredSizeSum += window->preferredSize;
-        maxRowLength -= grid_windowSpacing;
-        window->size = window->preferredSize;
-        window = window->next;
-    }
-    if (windowsPreferredSizeSum > maxRowLength || grid_minimizeEmptySpace) {
-        double ratio = (double)maxRowLength / windowsPreferredSizeSum;
-        window = row->firstWindow;
-        while (window != NULL) {
-            window->size = (uint32_t)round(window->preferredSize * ratio);
-            window = window->next;
-        }
-    }
-    layoutRow(row);
 }
 
 void layoutRow(struct Row* row) {
@@ -328,7 +328,7 @@ void positionRow(struct Row* row) {
     }
 }
 
-void applyRowGeometry(struct Row* row) {
+void applyRowGeometry(const struct Row* row) {
     struct Window* window = row->firstWindow;
     while (window != NULL) {
         applyWindowGeometry(window);
@@ -439,7 +439,7 @@ void destroyWindow(wlc_handle const view) {
     }
 }
 
-bool isLastWindow(struct Window* window) {
+bool isLastWindow(const struct Window* window) {
     // TODO: Remove if unneeded
     return window->parent->lastWindow == window;
 }
@@ -531,7 +531,7 @@ void positionWindow(struct Window* window) {
     }
 }
 
-void applyWindowGeometry(struct Window* window) {
+void applyWindowGeometry(const struct Window* window) {
     struct Row* row = window->parent;
     uint32_t offset = -(uint32_t)round(row->parent->scroll);
     struct wlc_geometry geometry;

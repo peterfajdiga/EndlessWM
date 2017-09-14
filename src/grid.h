@@ -59,26 +59,26 @@ static void clearGrid(struct Grid* grid);
 // row operations
 static struct Row* createRow(wlc_handle view);  // creates a new Row to house the given view
 static struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev);
-bool isLastRow(struct Row* row);
+bool isLastRow(const struct Row* row);
 static void addRowToGrid(struct Row* row, struct Grid* grid);
 static void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev);
 static void removeRow(struct Row* row);
 static void resizeWindowsIfNecessary(struct Row* row);
 void layoutRow(struct Row* row);
 static void positionRow(struct Row* row);
-static void applyRowGeometry(struct Row* row);
+static void applyRowGeometry(const struct Row* row);
 static void scrollToRow(const struct Row* row);
 
 // window operations
 struct Window* createWindow(wlc_handle view);
 void destroyWindow(wlc_handle view);
-bool isLastWindow(struct Window* window);
+bool isLastWindow(const struct Window* window);
 bool viewResized(wlc_handle view);  // returns true if resizing handled by grid
 static void addWindowToRow(struct Window* window, struct Row* row);
 static void addWindowToRowAfter(struct Window* window, struct Row* grid, struct Window* prev);
 static void removeWindow(struct Window* window);
 static void positionWindow(struct Window* window);
-static void applyWindowGeometry(struct Window* window);
+static void applyWindowGeometry(const struct Window* window);
 
 // presentation
 void printGrid(const struct Grid* grid);
