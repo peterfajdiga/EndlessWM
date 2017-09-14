@@ -35,6 +35,8 @@ static double prevMouseX, prevMouseY;
 static wlc_handle movedView = 0;
 static struct Window* resizedWindow = NULL;
 static struct Row* resizedRow = NULL;
+wlc_handle lastHoveredGriddedView = 0;
+enum wlc_resize_edge lastHoveredEdge = 0;
 
 
 void sendButton(wlc_handle const view, uint32_t const button) {
@@ -97,9 +99,8 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
                             struct Window* window = getWindow(view);
                             assert (window != NULL);  // because we know it's not floating (must be gridded)
                             enum wlc_resize_edge edge = getClosestEdge(view);
-                            bool horizontalEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_BOTTOM);
                             bool previousEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_LEFT);
-                            bool resizingRow = !grid_horizontal != !horizontalEdge;  // ! converts to bool (0 or 1)
+                            bool resizingRow = isRowEdge(edge);
                             if (resizingRow) {
                                 resizedRow = previousEdge ? window->parent->prev : window->parent;
                                 if (resizedRow != NULL) {
@@ -178,6 +179,11 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
     // In order to give the compositor control of the pointer placement it needs
     // to be explicitly set after receiving the motion event:
     wlc_pointer_set_position_v2(x, y);
+
+    if (isGridded(view)) {
+        lastHoveredGriddedView = view;
+        lastHoveredEdge = getClosestEdge(view);
+    }
 
     switch (mouseState) {
         case NORMAL: break;

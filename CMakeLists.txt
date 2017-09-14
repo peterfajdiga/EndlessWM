@@ -14,7 +14,9 @@ set(SOURCE_FILES
         src/keystroke.c
         src/keystroke.h
         src/mouse.c
-        src/mouse.h)
+        src/mouse.h
+        src/painting.c
+        src/painting.h)
 
 add_executable(endlesswm ${SOURCE_FILES})
 

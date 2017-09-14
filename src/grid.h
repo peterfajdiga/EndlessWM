@@ -60,6 +60,7 @@ static void clearGrid(struct Grid* grid);
 static struct Row* createRow(wlc_handle view);  // creates a new Row to house the given view
 static struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev);
 bool isLastRow(const struct Row* row);
+bool isRowEdge(enum wlc_resize_edge edge);
 static void addRowToGrid(struct Row* row, struct Grid* grid);
 static void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev);
 static void removeRow(struct Row* row);

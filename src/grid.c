@@ -67,7 +67,6 @@ struct Window* getWindow(wlc_handle const view) {
     if (view >= windowCount) {
         return NULL;
     }
-    assert ((windowsByView[view] == NULL) == !isGriddable(view));
     return windowsByView[view];
 }
 
@@ -309,6 +308,11 @@ struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
 bool isLastRow(const struct Row* row) {
     // TODO: Remove if unneeded
     return row->parent->lastRow == row;
+}
+
+bool isRowEdge(enum wlc_resize_edge edge) {
+    bool horizontalEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_BOTTOM);
+    return !grid_horizontal != !horizontalEdge;  // ! converts to bool (0 or 1)
 }
 
 void layoutRow(struct Row* row) {

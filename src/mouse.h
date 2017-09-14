@@ -1,8 +1,12 @@
 #pragma once
 
+
 #include <wlc/wlc.h>
 
 
+
+wlc_handle lastHoveredGriddedView;
+enum wlc_resize_edge lastHoveredEdge;
 
 void sendButton(wlc_handle view, uint32_t button);
 
