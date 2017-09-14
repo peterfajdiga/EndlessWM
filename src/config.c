@@ -10,6 +10,10 @@
 
 
 static void initDefaults() {
+
+    // Behavior
+    behavior_scrollMult = 5.0;
+
     // Grid
     grid_horizontal = false;
     grid_minimizeEmptySpace = false;

@@ -11,6 +11,9 @@
 
 
 
+// Behavior
+double behavior_scrollMult;
+
 // Grid
 bool grid_horizontal;
 bool grid_minimizeEmptySpace;

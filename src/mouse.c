@@ -326,7 +326,7 @@ bool pointer_scroll(wlc_handle view, uint32_t time, const struct wlc_modifiers* 
 
     if (mods == MOD_WM0) {
         wlc_handle output = wlc_get_focused_output();
-        scrollGrid(getGrid(output), amount[0]);
+        scrollGrid(getGrid(output), amount[0] * behavior_scrollMult);
         return true;
     }
 
