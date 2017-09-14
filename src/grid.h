@@ -68,6 +68,7 @@ void layoutRow(struct Row* row);
 static void positionRow(struct Row* row);
 static void applyRowGeometry(const struct Row* row);
 static void scrollToRow(const struct Row* row);
+void resizeRow(struct Row* row, int32_t sizeDelta);
 
 // window operations
 struct Window* createWindow(wlc_handle view);
@@ -79,6 +80,7 @@ static void addWindowToRowAfter(struct Window* window, struct Row* grid, struct 
 static void removeWindow(struct Window* window);
 static void positionWindow(struct Window* window);
 static void applyWindowGeometry(const struct Window* window);
+void resizeWindow(struct Window* window, int32_t sizeDelta);
 
 // presentation
 void printGrid(const struct Grid* grid);

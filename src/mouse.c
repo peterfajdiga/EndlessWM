@@ -208,75 +208,20 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
         }
         case RESIZING_ROW: {
             assert (resizedRow != NULL);  // because of condition for RESIZING_ROW
-
             if (grid_horizontal) {
-                resizedRow->size += (uint32_t)round(x - prevMouseX);
+                resizeRow(resizedRow, (int32_t)round(x - prevMouseX));
             } else {
-                resizedRow->size += (uint32_t)round(y - prevMouseY);
+                resizeRow(resizedRow, (int32_t)round(y - prevMouseY));
             }
-            ensureMinSize(&resizedRow->size);
-            resizedRow->preferredSize = resizedRow->size;
-
-            // apply new geometry
-            layoutGridAt(resizedRow);
             break;
         }
         case RESIZING_WINDOW: {
             assert (resizedWindow);  // because of condition for RESIZING_WINDOW
-
-            int32_t sizeDelta;
             if (grid_horizontal) {
-                sizeDelta = (int32_t)round(y - prevMouseY);
+                resizeWindow(resizedWindow, (int32_t)round(y - prevMouseY));
             } else {
-                sizeDelta = (int32_t)round(x - prevMouseX);
+                resizeWindow(resizedWindow, (int32_t)round(x - prevMouseX));
             }
-
-            if (sizeDelta < 0) {
-                // resizedWindow is shrinking
-                int32_t minAllowedDelta_minSize = MIN_WINDOW_SIZE - resizedWindow->size;
-                if (sizeDelta < minAllowedDelta_minSize) {
-                    sizeDelta = minAllowedDelta_minSize;
-                }
-
-                // try restoring the size of following windows
-                int32_t availableRoom = -sizeDelta;
-                struct Window* next = resizedWindow->next;
-                while (next != NULL && availableRoom > 0) {
-                    int32_t desiredNextGrowth = grid_minimizeEmptySpace ? INT32_MAX : next->preferredSize - next->size;
-                    if (desiredNextGrowth > 0) {
-                        if (desiredNextGrowth > availableRoom) {
-                            desiredNextGrowth = availableRoom;
-                        }
-                        next->size += desiredNextGrowth;
-                        availableRoom -= desiredNextGrowth;
-                    }
-                    next = next->next;
-                }
-
-            } else {
-                // resizedWindow is growing
-                const struct Row* row = resizedWindow->parent;
-                int32_t maxAllowedDelta_rowLength = getMaxRowLength(row->parent->output) - (row->lastWindow->origin + row->lastWindow->size);
-
-                int32_t desiredNextShrinkage = sizeDelta - maxAllowedDelta_rowLength;
-                if (desiredNextShrinkage > 0) {  // same as sizeDelta > maxAllowedDelta_rowLength
-                    // there's not enough room in the row, but maybe we can shrink the next window
-                    struct Window* const next = resizedWindow->next;
-                    if (next != NULL) {
-                        int32_t maxAllowedNextShrinkage = next->size - MIN_WINDOW_SIZE;
-                        if (maxAllowedNextShrinkage > 0) {
-                            maxAllowedDelta_rowLength += desiredNextShrinkage;
-                            next->size -= desiredNextShrinkage;
-                        }
-                    }
-                    sizeDelta = maxAllowedDelta_rowLength;
-                }
-            }
-
-            // apply new geometry
-            resizedWindow->size += sizeDelta;
-            resizedWindow->preferredSize = resizedWindow->size;
-            layoutRow(resizedWindow->parent);
             break;
         }
     }

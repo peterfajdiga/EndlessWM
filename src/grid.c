@@ -372,6 +372,13 @@ void scrollToRow(const struct Row* row) {
     applyGridGeometry(grid);
 }
 
+void resizeRow(struct Row* row, int32_t sizeDelta) {
+    row->size += sizeDelta;
+    ensureMinSize(&row->size);
+    row->preferredSize = row->size;
+    layoutGridAt(row);
+}
+
 
 
 // window operations
@@ -557,6 +564,55 @@ void applyWindowGeometry(const struct Window* window) {
         }
         wlc_view_set_geometry(window->view, 0, &geometry);
     }
+}
+
+void resizeWindow(struct Window* window, int32_t sizeDelta) {
+    if (sizeDelta < 0) {
+        // resizedWindow is shrinking
+        int32_t minAllowedDelta_minSize = MIN_WINDOW_SIZE - window->size;
+        if (sizeDelta < minAllowedDelta_minSize) {
+            sizeDelta = minAllowedDelta_minSize;
+        }
+
+        // try restoring the size of following windows
+        int32_t availableRoom = -sizeDelta;
+        struct Window* next = window->next;
+        while (next != NULL && availableRoom > 0) {
+            int32_t desiredNextGrowth = grid_minimizeEmptySpace ? INT32_MAX : next->preferredSize - next->size;
+            if (desiredNextGrowth > 0) {
+                if (desiredNextGrowth > availableRoom) {
+                    desiredNextGrowth = availableRoom;
+                }
+                next->size += desiredNextGrowth;
+                availableRoom -= desiredNextGrowth;
+            }
+            next = next->next;
+        }
+
+    } else {
+        // resizedWindow is growing
+        const struct Row* row = window->parent;
+        int32_t maxAllowedDelta_rowLength = getMaxRowLength(row->parent->output) - (row->lastWindow->origin + row->lastWindow->size);
+
+        int32_t desiredNextShrinkage = sizeDelta - maxAllowedDelta_rowLength;
+        if (desiredNextShrinkage > 0) {  // same as sizeDelta > maxAllowedDelta_rowLength
+            // there's not enough room in the row, but maybe we can shrink the next window
+            struct Window* const next = window->next;
+            if (next != NULL) {
+                int32_t maxAllowedNextShrinkage = next->size - MIN_WINDOW_SIZE;
+                if (maxAllowedNextShrinkage > 0) {
+                    maxAllowedDelta_rowLength += desiredNextShrinkage;
+                    next->size -= desiredNextShrinkage;
+                }
+            }
+            sizeDelta = maxAllowedDelta_rowLength;
+        }
+    }
+
+    // apply new geometry
+    window->size += sizeDelta;
+    window->preferredSize = window->size;
+    layoutRow(window->parent);
 }
 
 
