@@ -241,6 +241,7 @@ void removeRow(struct Row* row) {
         below->prev = above;
         layoutGridAt(below);
     }
+    ensureSensibleScroll(grid);
 }
 
 // creates a new Row to house view
@@ -591,6 +592,10 @@ void printGrid(const struct Grid* grid) {
 
 void scrollGrid(struct Grid* grid, double amount) {
     grid->scroll += amount;
+    ensureSensibleScroll(grid);
+}
+
+void ensureSensibleScroll(struct Grid* grid) {
     if (grid->scroll < 0.0) {
         grid->scroll = 0.0;
     } else {

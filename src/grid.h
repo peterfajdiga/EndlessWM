@@ -83,6 +83,7 @@ static void applyWindowGeometry(struct Window* window);
 // presentation
 void printGrid(const struct Grid* grid);
 void scrollGrid(struct Grid* grid, double amount);
+static void ensureSensibleScroll(struct Grid* grid);
 
 
 // neighboring Windows
