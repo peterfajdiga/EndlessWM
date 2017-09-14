@@ -339,7 +339,6 @@ void applyRowGeometry(struct Row* row) {
 void scrollToRow(const struct Row* row) {
     struct Grid* const grid = row->parent;
     uint32_t const screenLength = getPageLength(grid->output);
-    double newScroll, scrollDelta;
 
     int32_t const row_top = row->origin;
     int32_t const row_btm = row_top + row->size;
@@ -356,12 +355,12 @@ void scrollToRow(const struct Row* row) {
             return;
         }
         // scroll up, so that row_top == screen_top
-        newScroll = (double)row_top;
+        grid->scroll = (double)row_top;
 
     } else if (margin_btm < 0) {
         // row is below the screen
         // scroll down, so that row_btm == screen_btm
-        newScroll = (double)(row_btm - screenLength);
+        grid->scroll = (double)(row_btm - screenLength);
 
     } else {
         assert(margin_top >= 0 && margin_btm >= 0);
@@ -370,19 +369,7 @@ void scrollToRow(const struct Row* row) {
     }
 
     // do scroll
-    scrollDelta = newScroll - grid->scroll;
-    grid->scroll = newScroll;
     applyGridGeometry(grid);
-
-    // also scroll pointer
-    double x, y;
-    wlc_pointer_get_position_v2(&x, &y);
-    if (grid_horizontal) {
-        x -= scrollDelta;
-    } else {
-        y -= scrollDelta;
-    }
-    wlc_pointer_set_position_v2(x, y);
 }
 
 
