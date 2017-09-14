@@ -198,6 +198,8 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             geom_new.origin = geom_start->origin;
             geom_new.size.w = geom_start->size.w + (uint32_t)round(x - prevMouseX);
             geom_new.size.h = geom_start->size.h + (uint32_t)round(y - prevMouseY);
+            ensureMinSize(&geom_new.size.w);
+            ensureMinSize(&geom_new.size.h);
             wlc_view_set_geometry(movedView, WLC_RESIZE_EDGE_BOTTOM_RIGHT, &geom_new);
             break;
         }
@@ -213,6 +215,7 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             } else {
                 resizedRow->size += (uint32_t)round(y - prevMouseY);
             }
+            ensureMinSize(&resizedRow->size);
             resizedRow->preferredSize = resizedRow->size;
 
             // apply new geometry
@@ -228,6 +231,7 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             } else {
                 resizedWindow->size += (uint32_t)round(x - prevMouseX);
             }
+            ensureMinSize(&resizedWindow->size);
             resizedWindow->preferredSize = resizedWindow->size;
 
             // apply new geometry

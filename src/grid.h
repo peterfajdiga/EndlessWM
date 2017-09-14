@@ -3,6 +3,9 @@
 #include <wlc/wlc.h>
 
 
+#define MIN_WINDOW_SIZE 64
+
+
 
 struct Grid {
     struct Row* firstRow;
@@ -108,3 +111,6 @@ enum wlc_resize_edge getClosestCorner(wlc_handle view);
 
 // output management
 void evacuateOutput(wlc_handle output);
+
+// misc
+void ensureMinSize(uint32_t* size);
