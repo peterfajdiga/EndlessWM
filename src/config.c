@@ -78,9 +78,31 @@ static void readKeybinding(struct Keystroke* pref, const char* key) {
 }
 
 static void readBoolean(bool* pref, const char* key) {
-    const bool value = g_key_file_get_boolean(configFile, group, key, &error);
+    const bool value = (bool)g_key_file_get_boolean(configFile, group, key, &error);
     if (error != NULL) {
         g_key_file_set_boolean(configFile, group, key, *pref);
+        changesMade = true;
+        error = NULL;
+    } else {
+        *pref = value;
+    }
+}
+
+static void readInteger(uint32_t* pref, const char* key) {
+    const uint32_t value = (uint32_t)g_key_file_get_integer(configFile, group, key, &error);
+    if (error != NULL) {
+        g_key_file_set_integer(configFile, group, key, *pref);
+        changesMade = true;
+        error = NULL;
+    } else {
+        *pref = value;
+    }
+}
+
+static void readDouble(double* pref, const char* key) {
+    const double value = g_key_file_get_double(configFile, group, key, &error);
+    if (error != NULL) {
+        g_key_file_set_double(configFile, group, key, *pref);
         changesMade = true;
         error = NULL;
     } else {
@@ -97,10 +119,14 @@ void readConfig() {
 //         fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
 //     }
 
+    group = "Behavior";
+    readDouble(&behavior_scrollMult, "scrollMultiplier");
+
     group = "Grid";
     readBoolean(&grid_horizontal        , "rootHorizontal");
     readBoolean(&grid_minimizeEmptySpace, "minimizeEmptySpace");
     readBoolean(&grid_floatingDialogs   , "floatingDialogs");
+    readInteger(&grid_windowSpacing     , "windowSpacing");
 
     group = "Keybindings";
     readKeybinding(&keystroke_terminate       , "terminate");
