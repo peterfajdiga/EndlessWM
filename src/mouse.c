@@ -273,34 +273,6 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
                 }
             }
 
-            /*uint32_t minAllowedDelta_minSize = MIN_WINDOW_SIZE - resizedWindow->size;
-
-            const struct Row* row = resizedWindow->parent;
-            uint32_t minAllowedDelta_rowLength = getMaxRowLength(row->parent->output) - (row->lastWindow->origin + row->lastWindow->size);
-
-            struct Window* const next = resizedWindow->next;
-            if (next != NULL) {
-                uint32_t maxAllowedNextShrinkage = next->size - MIN_WINDOW_SIZE;
-                uint32_t desiredNextShrinkage = minAllowedDelta_rowLength - minAllowedDelta_minSize;
-                if (desiredNextShrinkage > 0 && maxAllowedNextShrinkage > 0) {
-                    // row length is a bigger problem
-                    // and we can shrink the next window
-                    if (desiredNextShrinkage > maxAllowedNextShrinkage) {
-                        desiredNextShrinkage = maxAllowedNextShrinkage;
-                    }
-                    minAllowedDelta_rowLength -= desiredNextShrinkage;
-                    next->size -= desiredNextShrinkage;
-                }
-            }
-
-            if (sizeDelta < minAllowedDelta_minSize) {
-                sizeDelta = minAllowedDelta_minSize;
-            }
-            if (sizeDelta < minAllowedDelta_rowLength) {
-                assert(minAllowedDelta_minSize < minAllowedDelta_rowLength);
-                sizeDelta = minAllowedDelta_rowLength;
-            }*/
-
             // apply new geometry
             resizedWindow->size += sizeDelta;
             resizedWindow->preferredSize = resizedWindow->size;
