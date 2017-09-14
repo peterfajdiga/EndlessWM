@@ -280,6 +280,11 @@ struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev) {
     return row;
 }
 
+bool isLastRow(struct Row* row) {
+    // TODO: Remove if unneeded
+    return row->parent->lastRow == row;
+}
+
 void resizeWindowsIfNecessary(struct Row* const row) {
     assert (row->firstWindow != NULL);  // rows are never empty
     assert (row->lastWindow  != NULL);  // rows are never empty
@@ -444,6 +449,11 @@ void destroyWindow(wlc_handle const view) {
     if (targetSize >= MIN_WINDOW_COUNT && getWindowsOccupancy() <= shrinkThreshold) {
         windowsByView = realloc(windowsByView, targetSize * sizeof(struct Window*));
     }
+}
+
+bool isLastWindow(struct Window* window) {
+    // TODO: Remove if unneeded
+    return window->parent->lastWindow == window;
 }
 
 // returns true if resizing handled by grid
@@ -759,6 +769,61 @@ void scrollToView(wlc_handle const view) {
         return;
     }
     scrollToRow(window->parent);
+}
+
+enum wlc_resize_edge getClosestEdge(wlc_handle view) {
+    double x, y;
+    wlc_pointer_get_position_v2(&x, &y);
+    const struct wlc_geometry* geom = wlc_view_get_geometry(view);
+    double distToTop = y - geom->origin.y;
+    double distToBtm = geom->origin.y + geom->size.h - y;
+    double distToLeft = x - geom->origin.x;
+    double distToRight = geom->origin.x + geom->size.w - x;
+
+    if (distToTop < distToBtm) {
+        if (distToTop < distToLeft) {
+            if (distToTop < distToRight) {
+                return WLC_RESIZE_EDGE_TOP;
+            } else {
+                return WLC_RESIZE_EDGE_RIGHT;
+            }
+        } else {
+            if (distToLeft < distToRight) {
+                return WLC_RESIZE_EDGE_LEFT;
+            } else {
+                return WLC_RESIZE_EDGE_RIGHT;
+            }
+        }
+    } else {
+        if (distToBtm < distToLeft) {
+            if (distToBtm < distToRight) {
+                return WLC_RESIZE_EDGE_BOTTOM;
+            } else {
+                return WLC_RESIZE_EDGE_RIGHT;
+            }
+        } else {
+            if (distToLeft < distToRight) {
+                return WLC_RESIZE_EDGE_LEFT;
+            } else {
+                return WLC_RESIZE_EDGE_RIGHT;
+            }
+        }
+    }
+}
+
+enum wlc_resize_edge getClosestCorner(wlc_handle view) {
+    double x, y;
+    wlc_pointer_get_position_v2(&x, &y);
+    const struct wlc_geometry* geom = wlc_view_get_geometry(view);
+    double distToTop = y - geom->origin.y;
+    double distToBtm = geom->origin.y + geom->size.h - y;
+    double distToLeft = x - geom->origin.x;
+    double distToRight = geom->origin.x + geom->size.w - x;
+
+    enum wlc_resize_edge closestHorizontalEdge = distToTop < distToBtm ? WLC_RESIZE_EDGE_TOP : WLC_RESIZE_EDGE_BOTTOM;
+    enum wlc_resize_edge closestVerticalEdge = distToLeft < distToRight ? WLC_RESIZE_EDGE_LEFT : WLC_RESIZE_EDGE_RIGHT;
+
+    return closestHorizontalEdge | closestVerticalEdge;
 }
 
 

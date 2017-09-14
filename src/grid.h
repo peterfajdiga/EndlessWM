@@ -56,6 +56,7 @@ static void clearGrid(struct Grid* grid);
 // row operations
 static struct Row* createRow(wlc_handle view);  // creates a new Row to house the given view
 static struct Row* createRowAndPlaceAfter(wlc_handle view, struct Row* prev);
+bool isLastRow(struct Row* row);
 static void addRowToGrid(struct Row* row, struct Grid* grid);
 static void addRowToGridAfter(struct Row* row, struct Grid* grid, struct Row* prev);
 static void removeRow(struct Row* row);
@@ -68,6 +69,7 @@ static void scrollToRow(const struct Row* row);
 // window operations
 struct Window* createWindow(wlc_handle view);
 void destroyWindow(wlc_handle view);
+bool isLastWindow(struct Window* window);
 bool viewResized(wlc_handle view);  // returns true if resizing handled by grid
 static void addWindowToRow(struct Window* window, struct Row* row);
 static void addWindowToRowAfter(struct Window* window, struct Row* grid, struct Window* prev);
@@ -101,6 +103,8 @@ void moveViewRight(wlc_handle view);
 void moveRowBack(wlc_handle view);
 void moveRowForward(wlc_handle view);
 void scrollToView(wlc_handle view);
+enum wlc_resize_edge getClosestEdge(wlc_handle view);
+enum wlc_resize_edge getClosestCorner(wlc_handle view);
 
 // output management
 void evacuateOutput(wlc_handle output);

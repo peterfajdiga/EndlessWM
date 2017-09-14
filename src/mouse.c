@@ -28,11 +28,14 @@ static enum MouseState {
     MOVING_FLOATING,
     RESIZING_FLOATING,
     MOVING_GRIDDED,
-    RESIZING_GRIDDED
+    RESIZING_WINDOW,
+    RESIZING_ROW
 } mouseState = NORMAL;
 
 static double prevMouseX, prevMouseY;
 static wlc_handle movedView = 0;
+static struct Window* resizedWindow = NULL;
+static struct Row* resizedRow = NULL;
 
 
 void sendButton(wlc_handle const view, uint32_t const button) {
@@ -85,13 +88,30 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
                     }
 
                     if (testKeystroke(&mousestroke_resize, mods, button)) {
-                        movedView = view;
                         setMouseModActionPerformed(&mouseBackMod);
                         if (isFloating(view)) {
+                            movedView = view;
                             mouseState = RESIZING_FLOATING;
                             wlc_view_bring_to_front(movedView);
                         } else {
-                            mouseState = RESIZING_GRIDDED;
+                            // TODO: make it work when the gap between windows is grabbed
+                            struct Window* window = getWindow(view);
+                            assert (window != NULL);  // because we know it's not floating (must be gridded)
+                            enum wlc_resize_edge edge = getClosestEdge(view);
+                            bool horizontalEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_BOTTOM);
+                            bool previousEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_LEFT);
+                            bool resizingRow = !grid_horizontal != !horizontalEdge;  // ! converts to bool (0 or 1)
+                            if (resizingRow) {
+                                resizedRow = previousEdge ? window->parent->prev : window->parent;
+                                if (resizedRow != NULL) {
+                                    mouseState = RESIZING_ROW;
+                                }
+                            } else {
+                                resizedWindow = previousEdge ? window->prev : window;
+                                if (resizedWindow != NULL) {
+                                    mouseState = RESIZING_WINDOW;
+                                }
+                            }
                         }
                         return true;
                     }
@@ -122,7 +142,8 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
         }
 
         case RESIZING_FLOATING:
-        case RESIZING_GRIDDED: {
+        case RESIZING_WINDOW:
+        case RESIZING_ROW: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
                 mouseState = NORMAL;
             }
@@ -184,28 +205,33 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             // TODO
             break;
         }
-        case RESIZING_GRIDDED: {
-            // TODO: Resize by edges, not by windows
-            // TODO: Make other windows smaller if necessary
-            struct Window* window = getWindow(movedView);
-            assert (window != NULL);  // because of condition for RESIZING_GRIDDED
-            struct Row* row = window->parent;
+        case RESIZING_ROW: {
+            assert (resizedRow != NULL);  // because of condition for RESIZING_ROW
 
             if (grid_horizontal) {
-                window->size += (uint32_t)round(y - prevMouseY);
-                row->size    += (uint32_t)round(x - prevMouseX);
+                resizedRow->size += (uint32_t)round(x - prevMouseX);
             } else {
-                window->size += (uint32_t)round(x - prevMouseX);
-                row->size    += (uint32_t)round(y - prevMouseY);
+                resizedRow->size += (uint32_t)round(y - prevMouseY);
             }
-            window->preferredSize = window->size;
-            row->preferredSize = row->size;
+            resizedRow->preferredSize = resizedRow->size;
 
             // apply new geometry
-            layoutRow(row);
-            if (row->next != NULL) {
-                layoutGridAt(row->next);
+            layoutGridAt(resizedRow);
+            break;
+        }
+        case RESIZING_WINDOW: {
+            // TODO: Make other windows smaller if necessary
+            assert (resizedWindow);  // because of condition for RESIZING_WINDOW
+
+            if (grid_horizontal) {
+                resizedWindow->size += (uint32_t)round(y - prevMouseY);
+            } else {
+                resizedWindow->size += (uint32_t)round(x - prevMouseX);
             }
+            resizedWindow->preferredSize = resizedWindow->size;
+
+            // apply new geometry
+            layoutRow(resizedWindow->parent);
             break;
         }
     }
