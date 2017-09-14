@@ -113,4 +113,4 @@ enum wlc_resize_edge getClosestCorner(wlc_handle view);
 void evacuateOutput(wlc_handle output);
 
 // misc
-void ensureMinSize(uint32_t* size);
+bool ensureMinSize(uint32_t* size);  // returns true if size was too small

@@ -860,8 +860,10 @@ void evacuateOutput(wlc_handle const output) {
     destroyGrid(output);
 }
 
-void ensureMinSize(uint32_t* size) {
+bool ensureMinSize(uint32_t* size) {
     if (*size < MIN_WINDOW_SIZE) {
         *size = MIN_WINDOW_SIZE;
+        return true;
     }
+    return false;
 }

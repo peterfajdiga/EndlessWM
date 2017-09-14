@@ -9,7 +9,6 @@
 #include <wlc/wlc-wayland.h>
 
 
-
 enum MouseModState {
     UNPRESSED,
     PRESSED,
@@ -223,18 +222,88 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             break;
         }
         case RESIZING_WINDOW: {
-            // TODO: Make other windows smaller if necessary
             assert (resizedWindow);  // because of condition for RESIZING_WINDOW
 
+            int32_t sizeDelta;
             if (grid_horizontal) {
-                resizedWindow->size += (uint32_t)round(y - prevMouseY);
+                sizeDelta = (int32_t)round(y - prevMouseY);
             } else {
-                resizedWindow->size += (uint32_t)round(x - prevMouseX);
+                sizeDelta = (int32_t)round(x - prevMouseX);
             }
-            ensureMinSize(&resizedWindow->size);
-            resizedWindow->preferredSize = resizedWindow->size;
+
+            if (sizeDelta < 0) {
+                // resizedWindow is shrinking
+                int32_t minAllowedDelta_minSize = MIN_WINDOW_SIZE - resizedWindow->size;
+                if (sizeDelta < minAllowedDelta_minSize) {
+                    sizeDelta = minAllowedDelta_minSize;
+                }
+
+                // try restoring the size of following windows
+                int32_t availableRoom = -sizeDelta;
+                struct Window* next = resizedWindow->next;
+                while (next != NULL && availableRoom > 0) {
+                    int32_t desiredNextGrowth = grid_minimizeEmptySpace ? INT32_MAX : next->preferredSize - next->size;
+                    if (desiredNextGrowth > 0) {
+                        if (desiredNextGrowth > availableRoom) {
+                            desiredNextGrowth = availableRoom;
+                        }
+                        next->size += desiredNextGrowth;
+                        availableRoom -= desiredNextGrowth;
+                    }
+                    next = next->next;
+                }
+
+            } else {
+                // resizedWindow is growing
+                const struct Row* row = resizedWindow->parent;
+                int32_t maxAllowedDelta_rowLength = getMaxRowLength(row->parent->output) - (row->lastWindow->origin + row->lastWindow->size);
+
+                int32_t desiredNextShrinkage = sizeDelta - maxAllowedDelta_rowLength;
+                if (desiredNextShrinkage > 0) {  // same as sizeDelta > maxAllowedDelta_rowLength
+                    // there's not enough room in the row, but maybe we can shrink the next window
+                    struct Window* const next = resizedWindow->next;
+                    if (next != NULL) {
+                        int32_t maxAllowedNextShrinkage = next->size - MIN_WINDOW_SIZE;
+                        if (maxAllowedNextShrinkage > 0) {
+                            maxAllowedDelta_rowLength += desiredNextShrinkage;
+                            next->size -= desiredNextShrinkage;
+                        }
+                    }
+                    sizeDelta = maxAllowedDelta_rowLength;
+                }
+            }
+
+            /*uint32_t minAllowedDelta_minSize = MIN_WINDOW_SIZE - resizedWindow->size;
+
+            const struct Row* row = resizedWindow->parent;
+            uint32_t minAllowedDelta_rowLength = getMaxRowLength(row->parent->output) - (row->lastWindow->origin + row->lastWindow->size);
+
+            struct Window* const next = resizedWindow->next;
+            if (next != NULL) {
+                uint32_t maxAllowedNextShrinkage = next->size - MIN_WINDOW_SIZE;
+                uint32_t desiredNextShrinkage = minAllowedDelta_rowLength - minAllowedDelta_minSize;
+                if (desiredNextShrinkage > 0 && maxAllowedNextShrinkage > 0) {
+                    // row length is a bigger problem
+                    // and we can shrink the next window
+                    if (desiredNextShrinkage > maxAllowedNextShrinkage) {
+                        desiredNextShrinkage = maxAllowedNextShrinkage;
+                    }
+                    minAllowedDelta_rowLength -= desiredNextShrinkage;
+                    next->size -= desiredNextShrinkage;
+                }
+            }
+
+            if (sizeDelta < minAllowedDelta_minSize) {
+                sizeDelta = minAllowedDelta_minSize;
+            }
+            if (sizeDelta < minAllowedDelta_rowLength) {
+                assert(minAllowedDelta_minSize < minAllowedDelta_rowLength);
+                sizeDelta = minAllowedDelta_rowLength;
+            }*/
 
             // apply new geometry
+            resizedWindow->size += sizeDelta;
+            resizedWindow->preferredSize = resizedWindow->size;
             layoutRow(resizedWindow->parent);
             break;
         }
