@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <wlc/wlc.h>
 
 
@@ -21,7 +22,7 @@ struct Row {
     struct Window* firstWindow;
     struct Window* lastWindow;
     struct Grid* parent;
-    uint32_t origin;
+    uint32_t origin;  // TODO: make signed
     uint32_t size;
     uint32_t preferredSize;
 };
@@ -34,6 +35,18 @@ struct Window {
     uint32_t origin;
     uint32_t size;
     uint32_t preferredSize;
+};
+
+enum EdgeType {
+    EDGE_ROW,
+    EDGE_WINDOW,
+    EDGE_CORNER
+};
+
+struct Edge {
+    enum EdgeType type;
+    struct Row* row;        // row before edge
+    struct Window* window;  // window before edge
 };
 
 void grid_init();
@@ -110,8 +123,13 @@ void moveViewRight(wlc_handle view);
 void moveRowBack(wlc_handle view);
 void moveRowForward(wlc_handle view);
 void scrollToView(wlc_handle view);
-enum wlc_resize_edge getClosestEdge(wlc_handle view);
-enum wlc_resize_edge getClosestCorner(wlc_handle view);
+void getPointerPositionWithScroll(const struct Grid* grid, double* longPos, double* latPos);
+enum wlc_resize_edge getNearestEdgeOfView(wlc_handle view);
+enum wlc_resize_edge getNearestCornerOfView(wlc_handle view);
+struct Row* getHoveredRow(const struct Grid* grid);    // upper edge is considered part of row
+                                                       // returns last row if pointer is below last row
+struct Edge* getNearestEdge(const struct Grid* grid);  // free after use
+struct Edge* getExactEdge(const struct Grid* grid);    // free after use
 
 // output management
 void evacuateOutput(wlc_handle output);

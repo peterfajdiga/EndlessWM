@@ -1,12 +1,13 @@
 #pragma once
 
 
+#include "grid.h"
+
 #include <wlc/wlc.h>
 
 
 
-wlc_handle lastHoveredGriddedView;
-enum wlc_resize_edge lastHoveredEdge;
+struct Edge* hoveredEdge;
 
 void sendButton(wlc_handle view, uint32_t button);
 

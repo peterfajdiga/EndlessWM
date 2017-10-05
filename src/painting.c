@@ -8,6 +8,8 @@
 
 
 #define EDGE_WIDTH (grid_windowSpacing / 4)
+#define EDGE_START ((grid_windowSpacing - EDGE_WIDTH) / 2)
+#define EDGE_START_FROM_END ((EDGE_WIDTH + grid_windowSpacing) / 2)
 
 
 
@@ -35,13 +37,13 @@ static void tintViewEdge(wlc_handle const view, enum wlc_resize_edge edge, uint3
         case WLC_RESIZE_EDGE_BOTTOM:
             geom.origin.y += geom.size.h + grid_windowSpacing;
         case WLC_RESIZE_EDGE_TOP:
-            geom.origin.y -= (EDGE_WIDTH + grid_windowSpacing) / 2;
+            geom.origin.y -= EDGE_START_FROM_END;
             geom.size.h = EDGE_WIDTH;
             break;
         case WLC_RESIZE_EDGE_RIGHT:
             geom.origin.x += geom.size.w + grid_windowSpacing;
         case WLC_RESIZE_EDGE_LEFT:
-            geom.origin.x -= (EDGE_WIDTH + grid_windowSpacing) / 2;
+            geom.origin.x -= EDGE_START_FROM_END;
             geom.size.w = EDGE_WIDTH;
             break;
         default: break;
@@ -54,6 +56,58 @@ static void tintViewEdge(wlc_handle const view, enum wlc_resize_edge edge, uint3
             geom.origin.x = grid_windowSpacing;
             geom.size.w = getMaxRowLength(wlc_view_get_output(view)) - grid_windowSpacing;
         }
+    }
+    paintGeomColor(&geom, color);
+}
+
+static void tintEdge(struct Edge* edge, uint32_t color) {
+    assert (edge != NULL);
+    double longScreenPos, latScreenPos;
+    uint32_t longSize, latSize;
+
+    switch (edge->type) {
+        case EDGE_ROW: {
+            struct Row* row = edge->row;
+            if (row == NULL) {
+                // resizing the first edge makes no sense
+                return;
+            }
+            longScreenPos = (int32_t)row->origin + row->size - row->parent->scroll + EDGE_START;
+            latScreenPos = grid_windowSpacing;
+            longSize = EDGE_WIDTH;
+            latSize = getMaxRowLength(row->parent->output) - grid_windowSpacing;
+            break;
+        }
+
+        case EDGE_WINDOW: {
+            struct Window* window = edge->window;
+            if (window == NULL) {
+                // resizing the first edge makes no sense
+                return;
+            }
+            longScreenPos = (int32_t)window->parent->origin - window->parent->parent->scroll;
+            latScreenPos  = window->origin + window->size + EDGE_START;
+            longSize = window->parent->size;
+            latSize = EDGE_WIDTH;
+            break;
+        }
+
+        case EDGE_CORNER: // TODO
+
+        default: return;
+    }
+
+    struct wlc_geometry geom;
+    if (grid_horizontal) {
+        geom.origin.x = (uint32_t)round(longScreenPos);
+        geom.origin.y = (uint32_t)round(latScreenPos);
+        geom.size.w   = longSize;
+        geom.size.h   = latSize;
+    } else {
+        geom.origin.x = (uint32_t)round(latScreenPos);
+        geom.origin.y = (uint32_t)round(longScreenPos);
+        geom.size.w   = latSize;
+        geom.size.h   = longSize;
     }
     paintGeomColor(&geom, color);
 }
@@ -72,7 +126,11 @@ void output_render_pre(wlc_handle const output) {
 
 void output_render_post(wlc_handle const output) {
     // TODO: only draw when needed
-    if (isGridded(lastHoveredGriddedView)) {  // make sure it still exists
-        tintViewEdge(lastHoveredGriddedView, lastHoveredEdge, 0x80FFFFFF);
+    if (hoveredEdge != NULL) {
+        tintEdge(hoveredEdge, 0x80FFFFFF);
     }
+    /*const struct Row* hoveredRow = getHoveredRow(getGrid(output));
+    if (hoveredRow != NULL) {
+        paintGeomColor(wlc_view_get_geometry(hoveredRow->firstWindow->view), 0x800000FF);
+    }*/
 }

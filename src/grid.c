@@ -1,6 +1,7 @@
 #include "grid.h"
 #include "config.h"
 
+#include <float.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 
 
 #define MIN_WINDOW_COUNT 32
+#define EDGE_GRAB_SIZE 128
 
 
 
@@ -367,7 +369,7 @@ void scrollToRow(const struct Row* row) {
         grid->scroll = (double)(row_btm - screenLength);
 
     } else {
-        assert(margin_top >= 0 && margin_btm >= 0);
+        assert (margin_top >= 0 && margin_btm >= 0);
         // row visible, no need to scroll
         return;
     }
@@ -823,7 +825,20 @@ void scrollToView(wlc_handle const view) {
     scrollToRow(window->parent);
 }
 
-enum wlc_resize_edge getClosestEdge(wlc_handle view) {
+void getPointerPositionWithScroll(const struct Grid* grid, double* longPos, double* latPos) {
+    double x, y;
+    wlc_pointer_get_position_v2(&x, &y);
+
+    if (grid_horizontal) {
+        *longPos = x + grid->scroll;
+        *latPos = y;
+    } else {
+        *longPos = y + grid->scroll;
+        *latPos = x;
+    }
+}
+
+enum wlc_resize_edge getNearestEdgeOfView(wlc_handle view) {
     double x, y;
     wlc_pointer_get_position_v2(&x, &y);
     const struct wlc_geometry* geom = wlc_view_get_geometry(view);
@@ -863,7 +878,7 @@ enum wlc_resize_edge getClosestEdge(wlc_handle view) {
     }
 }
 
-enum wlc_resize_edge getClosestCorner(wlc_handle view) {
+enum wlc_resize_edge getNearestCornerOfView(wlc_handle view) {
     double x, y;
     wlc_pointer_get_position_v2(&x, &y);
     const struct wlc_geometry* geom = wlc_view_get_geometry(view);
@@ -876,6 +891,121 @@ enum wlc_resize_edge getClosestCorner(wlc_handle view) {
     enum wlc_resize_edge closestVerticalEdge = distToLeft < distToRight ? WLC_RESIZE_EDGE_LEFT : WLC_RESIZE_EDGE_RIGHT;
 
     return closestHorizontalEdge | closestVerticalEdge;
+}
+
+// bottom edge is considered part of row
+// returns last row if pointer is below last row
+struct Row* getHoveredRow(const struct Grid* grid) {
+    double longPos, latPos;
+    getPointerPositionWithScroll(grid, &longPos, &latPos);
+
+    for (struct Row* row = grid->firstRow; row != NULL; row = row->next) {
+        if ((int32_t)row->origin + row->size + grid_windowSpacing > longPos) {
+            return row;
+        }
+    }
+    assert (grid->firstRow == NULL || longPos > grid->firstRow->origin - grid_windowSpacing);
+    return grid->lastRow;
+}
+
+// free after use
+// untested after change in getHoveredRow()
+struct Edge* getNearestEdge(const struct Grid* grid) {
+    double longPos, latPos;
+    getPointerPositionWithScroll(grid, &longPos, &latPos);
+
+    struct Row* row_hovered = getHoveredRow(grid);
+    if (row_hovered == NULL) {
+        return NULL;
+    }
+    struct Row* row_nearestBtmEdge;
+    if (longPos < row_hovered->origin + row_hovered->size / 2) {
+        // cursor in the upper half of row_hovered
+        row_nearestBtmEdge = row_hovered->prev;
+    } else {
+        // cursor in the lower half of row_hovered
+        row_nearestBtmEdge = row_hovered;
+    }
+
+    double rowPos;
+    if (row_nearestBtmEdge == NULL) {
+        rowPos = 0;
+    } else {
+        rowPos = (int32_t)row_nearestBtmEdge->origin + row_nearestBtmEdge->size - grid_windowSpacing / 2;
+    }
+    double const distToRow = fabs(rowPos - longPos);
+
+    double distToWindow_last = DBL_MAX;
+    struct Window *window;
+    struct Window *window_last = NULL;
+    for (window = row_hovered->firstWindow; window != NULL; window = window->next) {
+        double const winPos = window->origin + window->size - grid_windowSpacing / 2;
+        double const distToWindow = fabs(winPos - latPos);
+        if (distToWindow >= distToWindow_last) {
+            // we've gone too far
+            break;
+        }
+        distToWindow_last = distToWindow;
+        window_last = window;
+    }
+
+    struct Edge* retval = malloc(sizeof(struct Edge));
+    if (distToRow < distToWindow_last) {
+        retval->type = EDGE_ROW;
+        retval->row = row_nearestBtmEdge;
+        retval->window = NULL;
+    } else {
+        retval->type = EDGE_WINDOW;
+        retval->row = NULL;
+        retval->window = window_last;
+    }
+
+    return retval;
+}
+
+// free after use
+struct Edge* getExactEdge(const struct Grid* grid) {
+    double longPos, latPos;
+    getPointerPositionWithScroll(grid, &longPos, &latPos);
+
+    struct Row* row_hovered = getHoveredRow(grid);
+    if (row_hovered == NULL) {
+        return NULL;
+    }
+
+    uint32_t const rowBtmEdge = row_hovered->origin + row_hovered->size;
+    if (longPos < rowBtmEdge) {
+        // inside of row hovered
+        for (struct Window* window = row_hovered->firstWindow; window != NULL; window = window->next) {
+            uint32_t windowRightEdge = window->origin + window->size;
+            uint32_t windowRightEdgeEnd = windowRightEdge + grid_windowSpacing;
+            if (latPos < windowRightEdge) {
+                // inside of window hovered
+                return NULL;
+            } else if (latPos < windowRightEdgeEnd) {
+                // window edge hovered
+                struct Edge* edge = malloc(sizeof(struct Edge));
+                edge->type = EDGE_WINDOW;
+                edge->row = NULL;
+                edge->window = window;
+                return edge;
+            }
+        }
+        // pointer is placed after last window
+        struct Edge* edge = malloc(sizeof(struct Edge));
+        edge->type = EDGE_WINDOW;
+        edge->row = NULL;
+        edge->window = row_hovered->lastWindow;
+        return edge;
+
+    } else {
+        // top edge hovered
+        struct Edge* edge = malloc(sizeof(struct Edge));
+        edge->type = EDGE_ROW;
+        edge->row = row_hovered;
+        edge->window = NULL;
+        return edge;
+    }
 }
 
 

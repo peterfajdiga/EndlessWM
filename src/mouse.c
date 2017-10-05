@@ -1,12 +1,12 @@
 #include "mouse.h"
 #include "config.h"
-#include "grid.h"
 #include "keyboard.h"
 
 #include <linux/input.h>
 #include <math.h>
 #include <time.h>
 #include <wlc/wlc-wayland.h>
+#include <stdlib.h>
 
 
 enum MouseModState {
@@ -35,8 +35,7 @@ static double prevMouseX, prevMouseY;
 static wlc_handle movedView = 0;
 static struct Window* resizedWindow = NULL;
 static struct Row* resizedRow = NULL;
-wlc_handle lastHoveredGriddedView = 0;
-enum wlc_resize_edge lastHoveredEdge = 0;
+struct Edge* hoveredEdge = NULL;
 
 
 void sendButton(wlc_handle const view, uint32_t const button) {
@@ -95,10 +94,9 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
                             mouseState = RESIZING_FLOATING;
                             wlc_view_bring_to_front(movedView);
                         } else {
-                            // TODO: make it work when the gap between windows is grabbed
                             struct Window* window = getWindow(view);
                             assert (window != NULL);  // because we know it's not floating (must be gridded)
-                            enum wlc_resize_edge edge = getClosestEdge(view);
+                            enum wlc_resize_edge edge = getNearestEdgeOfView(view);
                             bool previousEdge = edge & (WLC_RESIZE_EDGE_TOP | WLC_RESIZE_EDGE_LEFT);
                             bool resizingRow = isRowEdge(edge);
                             if (resizingRow) {
@@ -117,6 +115,30 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
                     }
 
                     wlc_view_focus(view);
+
+                } else {
+
+                    // edge mouse events (no view hovered)
+
+                    if (hoveredEdge != NULL && (button == BTN_LEFT || button == BTN_RIGHT)) {
+                        if (testKeystroke(&mousestroke_resize, mods, button)) {
+                            setMouseModActionPerformed(&mouseBackMod);
+                        }
+                        switch (hoveredEdge->type) {
+                            case EDGE_ROW:
+                                mouseState = RESIZING_ROW;
+                                resizedRow = hoveredEdge->row;
+                                break;
+                            case EDGE_WINDOW:
+                                mouseState = RESIZING_WINDOW;
+                                resizedWindow = hoveredEdge->window;
+                                break;
+                            case EDGE_CORNER: // TODO
+                            default:
+                                break;
+                        }
+                        return true;
+                    }
                 }
 
                 // global mouse events
@@ -141,10 +163,15 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
             }
         }
 
-        case RESIZING_FLOATING:
+        case RESIZING_FLOATING: {
+            if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
+                mouseState = NORMAL;
+            }
+        }
+
         case RESIZING_WINDOW:
         case RESIZING_ROW: {
-            if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
+            if (state == WLC_BUTTON_STATE_RELEASED && (button == BTN_LEFT || button == BTN_RIGHT)) {
                 mouseState = NORMAL;
             }
         }
@@ -180,13 +207,12 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
     // to be explicitly set after receiving the motion event:
     wlc_pointer_set_position_v2(x, y);
 
-    if (isGridded(view)) {
-        lastHoveredGriddedView = view;
-        lastHoveredEdge = getClosestEdge(view);
-    }
-
     switch (mouseState) {
-        case NORMAL: break;
+        case NORMAL: {
+            free(hoveredEdge);
+            hoveredEdge = view ? NULL : getExactEdge(getGrid(wlc_get_focused_output()));
+            break;
+        }
         case MOVING_FLOATING: {
             const struct wlc_geometry* geom_start = wlc_view_get_geometry(movedView);
             struct wlc_geometry geom_new;
