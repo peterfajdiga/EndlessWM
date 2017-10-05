@@ -68,27 +68,28 @@ static void tintEdge(struct Edge* edge, uint32_t color) {
     switch (edge->type) {
         case EDGE_ROW: {
             struct Row* row = edge->row;
-            if (row == NULL) {
-                // resizing the first edge makes no sense
-                return;
-            }
-            longScreenPos = (int32_t)row->origin + row->size - row->parent->scroll + EDGE_START;
             latScreenPos = grid_windowSpacing;
             longSize = EDGE_WIDTH;
-            latSize = getMaxRowLength(row->parent->output) - grid_windowSpacing;
+            latSize = getMaxRowLength(wlc_get_focused_output()) - grid_windowSpacing;
+            if (row == NULL) {
+                longScreenPos = EDGE_START;
+            } else {
+                longScreenPos = (int32_t) row->origin + row->size - row->parent->scroll + EDGE_START;
+            }
             break;
         }
 
         case EDGE_WINDOW: {
+            struct Row* row = edge->row;
             struct Window* window = edge->window;
-            if (window == NULL) {
-                // resizing the first edge makes no sense
-                return;
-            }
-            longScreenPos = (int32_t)window->parent->origin - window->parent->parent->scroll;
-            latScreenPos  = window->origin + window->size + EDGE_START;
-            longSize = window->parent->size;
+            longScreenPos = (int32_t)row->origin - row->parent->scroll;
+            longSize = row->size;
             latSize = EDGE_WIDTH;
+            if (window == NULL) {
+                latScreenPos  = EDGE_START;
+            } else {
+                latScreenPos  = window->origin + window->size + EDGE_START;
+            }
             break;
         }
 
@@ -125,12 +126,32 @@ void output_render_pre(wlc_handle const output) {
 }
 
 void output_render_post(wlc_handle const output) {
-    // TODO: only draw when needed
     if (hoveredEdge != NULL) {
         tintEdge(hoveredEdge, 0x80FFFFFF);
+    }
+    if (insertEdge != NULL) {
+        tintEdge(insertEdge, 0x80FFFFFF);
+    }
+    if (mouseState == MOVING_GRIDDED && movedView > 0) {
+        tintView(movedView, 0xA0000000);
     }
     /*const struct Row* hoveredRow = getHoveredRow(getGrid(output));
     if (hoveredRow != NULL) {
         paintGeomColor(wlc_view_get_geometry(hoveredRow->firstWindow->view), 0x800000FF);
     }*/
+
+    // dim inactive views
+    if (appearance_dimInactive) {
+        size_t viewCount;
+        const wlc_handle *views = wlc_output_get_views(output, &viewCount);
+        for (size_t i = 0; i < viewCount; i++) {
+            wlc_handle view = views[i];
+            if (wlc_view_get_state(view) & WLC_BIT_ACTIVATED) {
+                // view active
+            } else {
+                // view inactive
+                tintView(view, 0x80000000);
+            }
+        }
+    }
 }

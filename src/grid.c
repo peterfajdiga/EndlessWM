@@ -9,7 +9,7 @@
 
 
 #define MIN_WINDOW_COUNT 32
-#define EDGE_GRAB_SIZE 128
+#define ROW_EDGE_GRAB_SIZE (grid_windowSpacing / 2 + 24)
 
 
 
@@ -909,7 +909,6 @@ struct Row* getHoveredRow(const struct Grid* grid) {
 }
 
 // free after use
-// untested after change in getHoveredRow()
 struct Edge* getNearestEdge(const struct Grid* grid) {
     double longPos, latPos;
     getPointerPositionWithScroll(grid, &longPos, &latPos);
@@ -919,45 +918,63 @@ struct Edge* getNearestEdge(const struct Grid* grid) {
         return NULL;
     }
     struct Row* row_nearestBtmEdge;
-    if (longPos < row_hovered->origin + row_hovered->size / 2) {
+    if (longPos < (int32_t)row_hovered->origin + row_hovered->size / 2) {
         // cursor in the upper half of row_hovered
         row_nearestBtmEdge = row_hovered->prev;
+
     } else {
         // cursor in the lower half of row_hovered
         row_nearestBtmEdge = row_hovered;
+
+        if (longPos > (int32_t)row_hovered->origin + row_hovered->size + grid_windowSpacing) {
+            assert (isLastRow(row_hovered));
+            // cursor below row, don't check windows
+            struct Edge* retval = malloc(sizeof(struct Edge));
+            retval->type = EDGE_ROW;
+            retval->row = row_nearestBtmEdge;
+            retval->window = NULL;
+            return retval;
+        }
     }
 
-    double rowPos;
-    if (row_nearestBtmEdge == NULL) {
-        rowPos = 0;
-    } else {
-        rowPos = (int32_t)row_nearestBtmEdge->origin + row_nearestBtmEdge->size - grid_windowSpacing / 2;
+    double rowEdgePos = grid_windowSpacing / 2;
+    if (row_nearestBtmEdge != NULL) {
+        rowEdgePos += (int32_t)row_nearestBtmEdge->origin + row_nearestBtmEdge->size;
     }
-    double const distToRow = fabs(rowPos - longPos);
+    double const distToRowEdge = fabs(rowEdgePos - longPos);
 
-    double distToWindow_last = DBL_MAX;
-    struct Window *window;
-    struct Window *window_last = NULL;
-    for (window = row_hovered->firstWindow; window != NULL; window = window->next) {
+    assert (row_hovered->lastWindow != NULL);  // rows can't be empty
+    if (distToRowEdge > ROW_EDGE_GRAB_SIZE && latPos > row_hovered->lastWindow->origin + row_hovered->lastWindow->size) {
+        // cursor after last window
+        struct Edge* retval = malloc(sizeof(struct Edge));
+        retval->type = EDGE_WINDOW;
+        retval->row = row_hovered;
+        retval->window = row_hovered->lastWindow;
+        return retval;
+    }
+
+    double distToWindowEdge = fabs(grid_windowSpacing - latPos);  // first edge
+    struct Window *window_nearestRightEdge = NULL;
+    for (struct Window *window = row_hovered->firstWindow; window != NULL; window = window->next) {
         double const winPos = window->origin + window->size - grid_windowSpacing / 2;
-        double const distToWindow = fabs(winPos - latPos);
-        if (distToWindow >= distToWindow_last) {
+        double const distToWindowEdge_current = fabs(winPos - latPos);
+        if (distToWindowEdge_current >= distToWindowEdge) {
             // we've gone too far
             break;
         }
-        distToWindow_last = distToWindow;
-        window_last = window;
+        distToWindowEdge = distToWindowEdge_current;
+        window_nearestRightEdge = window;
     }
 
     struct Edge* retval = malloc(sizeof(struct Edge));
-    if (distToRow < distToWindow_last) {
+    if (distToRowEdge > distToWindowEdge) {
+        retval->type = EDGE_WINDOW;
+        retval->row = row_hovered;
+        retval->window = window_nearestRightEdge;
+    } else {
         retval->type = EDGE_ROW;
         retval->row = row_nearestBtmEdge;
         retval->window = NULL;
-    } else {
-        retval->type = EDGE_WINDOW;
-        retval->row = NULL;
-        retval->window = window_last;
     }
 
     return retval;
@@ -986,7 +1003,7 @@ struct Edge* getExactEdge(const struct Grid* grid) {
                 // window edge hovered
                 struct Edge* edge = malloc(sizeof(struct Edge));
                 edge->type = EDGE_WINDOW;
-                edge->row = NULL;
+                edge->row = row_hovered;
                 edge->window = window;
                 return edge;
             }
@@ -994,7 +1011,7 @@ struct Edge* getExactEdge(const struct Grid* grid) {
         // pointer is placed after last window
         struct Edge* edge = malloc(sizeof(struct Edge));
         edge->type = EDGE_WINDOW;
-        edge->row = NULL;
+        edge->row = row_hovered;
         edge->window = row_hovered->lastWindow;
         return edge;
 
@@ -1005,6 +1022,46 @@ struct Edge* getExactEdge(const struct Grid* grid) {
         edge->row = row_hovered;
         edge->window = NULL;
         return edge;
+    }
+}
+
+bool doesEdgeBelongToView(const struct Edge* const edge, wlc_handle const view) {
+    const struct Window* const window = getWindow(view);
+    if (window == NULL) {
+        // not a gridded window, therefore it has no Edges
+        return false;
+    }
+
+    switch (edge->type) {
+        case EDGE_ROW: {
+            bool const isOnlyWindow = window->prev == NULL && window->next == NULL;
+            return isOnlyWindow && (edge->row == window->parent || edge->row == window->parent->prev);
+        }
+        case EDGE_WINDOW: {
+            bool const isSameRow = edge->row == window->parent;
+            return isSameRow && (edge->window == window || edge->window == window->prev);
+        }
+        case EDGE_CORNER: // TODO
+        default: return false;
+    }
+}
+
+void moveViewToEdge(wlc_handle const view, struct Edge *edge) {
+    struct Window* const window = getWindow(view);
+    assert (window != NULL);  // only gridded windows can be moved
+    assert (!doesEdgeBelongToView(edge, view));  // crash early
+    removeWindow(window);
+    switch (edge->type) {
+        case EDGE_ROW: {
+            struct Row* const newRow = createRowAndPlaceAfter(window->view, edge->row);
+            addWindowToRow(window, newRow);
+            break;
+        }
+        case EDGE_WINDOW: {
+            addWindowToRowAfter(window, edge->row, edge->window);
+            break;
+        }
+        case EDGE_CORNER: assert (false);
     }
 }
 

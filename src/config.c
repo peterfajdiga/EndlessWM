@@ -11,6 +11,9 @@
 
 static void initDefaults() {
 
+    // Appearance
+    appearance_dimInactive = false;
+
     // Behavior
     behavior_scrollMult = 5.0;
 
@@ -119,8 +122,11 @@ void readConfig() {
 //         fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
 //     }
 
+    group = "Appearance";
+    readBoolean(&appearance_dimInactive, "dimInactive");
+
     group = "Behavior";
-    readDouble(&behavior_scrollMult, "scrollMultiplier");
+    readDouble(&behavior_scrollMult, "scrollSpeed");
 
     group = "Grid";
     readBoolean(&grid_horizontal        , "rootHorizontal");

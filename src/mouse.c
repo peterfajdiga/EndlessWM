@@ -22,20 +22,14 @@ static void setMouseModActionPerformed(enum MouseModState* outState) {
     }
 }
 
-static enum MouseState {
-    NORMAL,
-    MOVING_FLOATING,
-    RESIZING_FLOATING,
-    MOVING_GRIDDED,
-    RESIZING_WINDOW,
-    RESIZING_ROW
-} mouseState = NORMAL;
+enum MouseState mouseState = NORMAL;
 
 static double prevMouseX, prevMouseY;
-static wlc_handle movedView = 0;
+wlc_handle movedView = 0;
 static struct Window* resizedWindow = NULL;
 static struct Row* resizedRow = NULL;
 struct Edge* hoveredEdge = NULL;
+struct Edge* insertEdge = NULL;
 
 
 void sendButton(wlc_handle const view, uint32_t const button) {
@@ -156,24 +150,46 @@ bool pointer_button(wlc_handle view, uint32_t time, const struct wlc_modifiers *
             break;
         }
 
-        case MOVING_FLOATING:
+        case MOVING_FLOATING: {
+            if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_LEFT) {
+                movedView = 0;
+                mouseState = NORMAL;
+                return true;
+            }
+            break;
+        }
+
         case MOVING_GRIDDED: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_LEFT) {
+                if (insertEdge != NULL) {
+                    moveViewToEdge(movedView, insertEdge);
+                    free(insertEdge);
+                    insertEdge = NULL;
+                }
+                movedView = 0;
                 mouseState = NORMAL;
+                return true;
             }
+            break;
         }
 
         case RESIZING_FLOATING: {
             if (state == WLC_BUTTON_STATE_RELEASED && button == BTN_RIGHT) {
+                movedView = 0;
                 mouseState = NORMAL;
+                return true;
             }
+            break;
         }
 
         case RESIZING_WINDOW:
         case RESIZING_ROW: {
             if (state == WLC_BUTTON_STATE_RELEASED && (button == BTN_LEFT || button == BTN_RIGHT)) {
+                movedView = 0;
                 mouseState = NORMAL;
+                return true;
             }
+            break;
         }
     }
 
@@ -207,6 +223,9 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
     // to be explicitly set after receiving the motion event:
     wlc_pointer_set_position_v2(x, y);
 
+    free(insertEdge);
+    insertEdge = NULL;
+
     switch (mouseState) {
         case NORMAL: {
             free(hoveredEdge);
@@ -235,7 +254,13 @@ bool pointer_motion(wlc_handle view, uint32_t time, double x, double y) {
             break;
         }
         case MOVING_GRIDDED: {
-            // TODO
+            insertEdge = getNearestEdge(getGrid(wlc_get_focused_output()));
+
+            // don't allow moving to the same position
+            if (doesEdgeBelongToView(insertEdge, movedView)) {
+                free(insertEdge);
+                insertEdge = NULL;
+            }
             break;
         }
         case RESIZING_ROW: {

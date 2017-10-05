@@ -11,6 +11,9 @@
 
 
 
+// Appearance
+bool appearance_dimInactive;
+
 // Behavior
 double behavior_scrollMult;
 

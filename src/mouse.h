@@ -7,7 +7,18 @@
 
 
 
+enum MouseState {
+    NORMAL,
+    MOVING_FLOATING,
+    RESIZING_FLOATING,
+    MOVING_GRIDDED,
+    RESIZING_WINDOW,
+    RESIZING_ROW
+} mouseState;
+
+wlc_handle movedView;
 struct Edge* hoveredEdge;
+struct Edge* insertEdge;
 
 void sendButton(wlc_handle view, uint32_t button);
 

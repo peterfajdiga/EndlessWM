@@ -90,7 +90,7 @@ void destroyWindow(wlc_handle view);
 bool isLastWindow(const struct Window* window);
 bool viewResized(wlc_handle view);  // returns true if resizing handled by grid
 static void addWindowToRow(struct Window* window, struct Row* row);
-static void addWindowToRowAfter(struct Window* window, struct Row* grid, struct Window* prev);
+static void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* prev);
 static void removeWindow(struct Window* window);
 static void positionWindow(struct Window* window);
 static void applyWindowGeometry(const struct Window* window);
@@ -126,10 +126,12 @@ void scrollToView(wlc_handle view);
 void getPointerPositionWithScroll(const struct Grid* grid, double* longPos, double* latPos);
 enum wlc_resize_edge getNearestEdgeOfView(wlc_handle view);
 enum wlc_resize_edge getNearestCornerOfView(wlc_handle view);
-struct Row* getHoveredRow(const struct Grid* grid);    // upper edge is considered part of row
+struct Row* getHoveredRow(const struct Grid* grid);    // bottom edge is considered part of row
                                                        // returns last row if pointer is below last row
 struct Edge* getNearestEdge(const struct Grid* grid);  // free after use
 struct Edge* getExactEdge(const struct Grid* grid);    // free after use
+bool doesEdgeBelongToView(const struct Edge* edge, wlc_handle view);
+void moveViewToEdge(wlc_handle view, struct Edge *edge);
 
 // output management
 void evacuateOutput(wlc_handle output);
