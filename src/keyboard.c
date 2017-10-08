@@ -96,14 +96,15 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
             wlc_terminate();
             return true;
 
-        } else if (testKeystroke(&keystroke_terminal, mods, sym)) {
-            char terminal[] = "konsole";
-            wlc_exec(terminal, (char* const[]){ terminal, NULL });
-            return true;
-
-        } else if (testKeystroke(&keystroke_ksysguard, mods, sym)) {
-            char ksysguard[] = "ksysguard";
-            wlc_exec(ksysguard, (char* const[]){ ksysguard, NULL });
+        } else {
+            // Application shortcuts
+            for (size_t i = 0; i < applicationShortcutCount; i++) {
+                if (testKeystroke(&applicationShortcuts[i].binding, mods, sym)) {
+                    char* command = applicationShortcuts[i].command;
+                    wlc_exec(command, (char* const[]){ command, NULL });
+                    return true;
+                }
+            }
         }
     }
 

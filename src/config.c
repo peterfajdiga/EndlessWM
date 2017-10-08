@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <linux/input.h>
+#include <stdio.h>
 
 
 #define CONFIG_FILE_PATH "/.config/endlesswm"
@@ -27,7 +28,7 @@ static void initDefaults() {
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
     keystroke_terminal           = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
     keystroke_ksysguard          = (struct Keystroke){WLC_BIT_MOD_CTRL, XKB_KEY_Escape};
-    keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F5};
+    keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F4};
     keystroke_launch             = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
     keystroke_focusWindowUp      = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
     keystroke_focusWindowDown    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Down};
@@ -43,6 +44,10 @@ static void initDefaults() {
     // Mousebindings (not configurable)
     mousestroke_move   = (struct Keystroke){MOD_WM0, BTN_LEFT};
     mousestroke_resize = (struct Keystroke){MOD_WM0, BTN_RIGHT};
+
+    // Application shortcuts (see readConfig() for defaults)
+    applicationShortcuts = NULL;
+    applicationShortcutCount = 0;
 }
 
 
@@ -118,9 +123,9 @@ void readConfig() {
     configFile = g_key_file_new();
     
     char* configFilePath = getHomeFilePath(CONFIG_FILE_PATH);
-//     if (!g_key_file_load_from_file(configFile, configFilePath, G_KEY_FILE_NONE, NULL)){
-//         fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
-//     }
+    if (!g_key_file_load_from_file(configFile, configFilePath, G_KEY_FILE_NONE, NULL)){
+        fprintf(stderr, "Could not read config file %s\nUsing defaults\n", configFilePath);
+    }
 
     group = "Appearance";
     readBoolean(&appearance_dimInactive, "dimInactive");
@@ -149,6 +154,44 @@ void readConfig() {
     readKeybinding(&keystroke_moveWindowRight , "moveWindowRight");
     readKeybinding(&keystroke_moveRowBack     , "moveRowBack");
     readKeybinding(&keystroke_moveRowForward  , "moveRowForward");
+
+    group = "Application Shortcuts";
+    if (g_key_file_has_group(configFile, group)) {
+        // read settings
+        gchar** keys = g_key_file_get_keys(configFile, group, &applicationShortcutCount, &error);
+        applicationShortcuts = malloc(applicationShortcutCount * sizeof(struct ApplicationShortcut));  // TODO: free
+        for (size_t i = 0; i < applicationShortcutCount; i++) {
+            size_t valLen;
+            gchar** value = g_key_file_get_string_list(configFile, group, keys[i], &valLen, &error);
+            if (valLen != 2 || error != NULL) {
+                fprintf(stderr, "Invalid format of Application Shortcut %s\n", keys[i]);
+            } else {
+                applicationShortcuts[i].binding = parseKeystroke(value[0]);
+                applicationShortcuts[i].name    = keys[i];
+                applicationShortcuts[i].command = malloc(strlen(value[1]));
+                strcpy(applicationShortcuts[i].command, value[1]);
+            }
+            g_strfreev(value);
+        }
+        g_strfreev(keys);
+    } else {
+        // setup default settings
+        applicationShortcuts = malloc(sizeof(struct ApplicationShortcut));  // TODO: free
+        applicationShortcutCount = 1;
+        applicationShortcuts[0].binding = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_t};
+        applicationShortcuts[0].name    = "terminal";
+        applicationShortcuts[0].command = "konsole";
+        // write default settings
+        for (size_t i = 0; i < applicationShortcutCount; i++) {
+            char** prefVal = malloc(2 * sizeof(char*));
+            prefVal[0] = keystrokeToString(&applicationShortcuts[i].binding);
+            prefVal[1] = applicationShortcuts[i].command;
+            g_key_file_set_string_list(configFile, group, applicationShortcuts[i].name, (const char**)prefVal, 2);
+            free(prefVal[0]);
+            free(prefVal);
+        }
+        changesMade = true;
+    }
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);

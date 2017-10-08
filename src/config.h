@@ -11,6 +11,12 @@
 
 
 
+struct ApplicationShortcut {
+    struct Keystroke binding;
+    char* name;
+    char* command;
+};
+
 // Appearance
 bool appearance_dimInactive;
 
@@ -43,6 +49,10 @@ struct Keystroke keystroke_moveRowForward;
 // Mousebindings
 struct Keystroke mousestroke_move;
 struct Keystroke mousestroke_resize;
+
+// Application Shortcuts
+struct ApplicationShortcut* applicationShortcuts;
+size_t applicationShortcutCount;
 
 char* getHomeFilePath(const char* relativeFilePath);
 void readConfig();
