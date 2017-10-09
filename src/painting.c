@@ -2,6 +2,7 @@
 #include "config.h"
 #include "grid.h"
 #include "mouse.h"
+#include "metamanager.h"
 
 #include <wlc/wlc-render.h>
 #include <stdlib.h>
@@ -115,13 +116,13 @@ static void tintEdge(struct Edge* edge, uint32_t color) {
 
 void output_render_pre(wlc_handle const output) {
     // wallpaper (this should be done in a client, but I'm lazy)
-    struct Grid* grid = getGrid(output);
-    assert (grid != NULL);
-    if (grid->wallpaper != NULL) {
+    struct Output* outputMeta = getOutput(output);
+    assert (outputMeta != NULL);
+    if (outputMeta->wallpaper != NULL) {
         struct wlc_geometry geom;
         geom.origin = (struct wlc_point) {0, 0};
         geom.size = *wlc_output_get_resolution(output);
-        wlc_pixels_write(WLC_RGBA8888, &geom, grid->wallpaper);
+        wlc_pixels_write(WLC_RGBA8888, &geom, outputMeta->wallpaper);
     }
 }
 

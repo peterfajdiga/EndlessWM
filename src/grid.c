@@ -1,5 +1,6 @@
 #include "grid.h"
 #include "config.h"
+#include "metamanager.h"
 
 #include <float.h>
 #include <math.h>
@@ -8,43 +9,16 @@
 #include <wlc/wlc-render.h>
 
 
-#define MIN_WINDOW_COUNT 32
 #define ROW_EDGE_GRAB_SIZE (grid_windowSpacing / 2 + 24)
 
 
 
-static struct Grid** gridsByOutput = NULL;
-static size_t gridCount = 0;
-static struct Window** windowsByView = NULL;
-static size_t windowCount = 0;
 static uint32_t GRIDDABLE_TYPES = 0;
 
 void grid_init() {
-    windowsByView = malloc(MIN_WINDOW_COUNT * sizeof(struct Window*));
-    windowCount = MIN_WINDOW_COUNT;
-    for (size_t i = 0; i < windowCount; i++) {
-        windowsByView[i] = NULL;
-    }
-
     if (!grid_floatingDialogs) {
         GRIDDABLE_TYPES |= WLC_BIT_MODAL;
     }
-}
-
-void grid_free() {
-    free(windowsByView);
-    free(gridsByOutput);
-}
-
-static size_t getWindowsOccupancy() {
-    // TODO: Instead of iterating, just remember highest view handle
-    size_t const lowestShrinkThreshold = MIN_WINDOW_COUNT/2 - 1;
-    for (size_t i = windowCount - 1; i >= lowestShrinkThreshold; i--) {
-        if (windowsByView[i] != NULL) {
-            return i+1;
-        }
-    }
-    return lowestShrinkThreshold;  // or less, we don't care
 }
 
 
@@ -52,10 +26,7 @@ static size_t getWindowsOccupancy() {
 // getters
 
 struct Grid* getGrid(wlc_handle const output) {
-    if (output >= gridCount) {
-        return NULL;
-    }
-    return gridsByOutput[output];
+    return getOutput(output)->grid;
 }
 
 static wlc_handle getGriddedParentView(wlc_handle view) {
@@ -66,10 +37,7 @@ static wlc_handle getGriddedParentView(wlc_handle view) {
 }
 
 struct Window* getWindow(wlc_handle const view) {
-    if (view >= windowCount) {
-        return NULL;
-    }
-    return windowsByView[view];
+    return getView(view)->window;
 }
 
 bool isGriddable(wlc_handle const view) {
@@ -105,46 +73,15 @@ uint32_t getPageLength(wlc_handle const output) {
 // grid operations
 
 struct Grid* createGrid(wlc_handle output) {
-    if (output >= gridCount) {
-        size_t oldGridCount = gridCount;
-        gridCount = output + 1;
-        gridsByOutput = realloc(gridsByOutput, gridCount * sizeof(struct Grid*));
-        for (size_t i = oldGridCount; i < output; i++) {
-            gridsByOutput[i] = NULL;
-        }
-    }
-    
     struct Grid* grid = malloc(sizeof(struct Grid));
     grid->firstRow = NULL;
     grid->lastRow = NULL;
     grid->output = output;
     grid->scroll = 0.0;
-
-    // wallpaper (this should be done in a client, but I'm lazy)
-    const struct wlc_size* resolution = wlc_output_get_resolution(output);
-    uint32_t const width = resolution->w;
-    uint32_t const height = resolution->h;
-    grid->wallpaper = malloc(width * height * sizeof(uint32_t));
-    for (size_t y = 0; y < height; y++) {
-        size_t startX = y * width;
-        for (size_t x = 0; x < width; x++) {
-            grid->wallpaper[startX + x] = 0xff804000;
-        }
-    }
-    
-    gridsByOutput[output] = grid;
-    return grid;
 }
 
 void destroyGrid(wlc_handle output) {
-    struct Grid* grid = getGrid(output);
-    assert (grid != NULL);
-    if (grid->wallpaper != NULL) {
-        free(grid->wallpaper);
-    }
-    free(grid);
-    gridsByOutput[output] = NULL;
-    // probably no need to shrink the array, people don't have THAT many screens
+    // nothing to do
 }
 
 void layoutGrid(struct Grid* grid) {
@@ -396,11 +333,6 @@ struct Window* createWindow(wlc_handle const view) {
     wlc_handle const output = wlc_view_get_output(view);
     assert (getGrid(output) != NULL);  // grid already created by function output_created
 
-    if (view >= windowCount) {
-        windowCount *= 2;
-        windowsByView = realloc(windowsByView, windowCount * sizeof(struct Window*));
-    }
-
     struct wlc_size const viewSize = wlc_view_get_geometry(view)->size;
     uint32_t windowSize = grid_horizontal ? viewSize.h : viewSize.w;
 
@@ -411,8 +343,6 @@ struct Window* createWindow(wlc_handle const view) {
     window->view = view;
     window->size = windowSize;
     window->preferredSize = windowSize;
-
-    windowsByView[view] = window;
 
     struct Row* row = createRow(view);
     addWindowToRow(window, row);
@@ -443,13 +373,6 @@ void destroyWindow(wlc_handle const view) {
     // free
     removeWindow(window);
     free(window);
-
-    windowsByView[view] = NULL;
-    size_t const shrinkThreshold = windowCount / 4;
-    size_t const targetSize = windowCount / 2;
-    if (targetSize >= MIN_WINDOW_COUNT && getWindowsOccupancy() <= shrinkThreshold) {
-        windowsByView = realloc(windowsByView, targetSize * sizeof(struct Window*));
-    }
 }
 
 bool isLastWindow(const struct Window* window) {
@@ -1076,18 +999,14 @@ void evacuateOutput(wlc_handle const output) {
     }
 
     // find target grid
-    struct Grid* targetGrid = NULL;
-    for (size_t i = 0; i < gridCount; i++) {
-        if (gridsByOutput[i] != NULL && gridsByOutput[i] != grid) {
-            targetGrid = gridsByOutput[i];
-            break;
-        }
-    }
+    struct Output* targetOutput = getAnOutput();
 
-    if (targetGrid == NULL) {
+    if (targetOutput == NULL) {
         // we can't evacuate anywhere, close all windows
         clearGrid(grid);
     } else {
+        assert (targetOutput->grid != NULL);  // all outputs have grids
+        struct Grid* targetGrid = targetOutput->grid;
         // move all rows to targetGrid
         while (grid->firstRow != NULL) {
             struct Row* firstRow = grid->firstRow;

@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "painting.h"
+#include "metamanager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,14 +15,14 @@
 
 static bool view_created(wlc_handle view) {
     wlc_view_set_mask(view, wlc_output_get_mask(wlc_view_get_output(view)));
-    createWindow(view);
+    onViewCreated(view);
     wlc_view_focus(view);
     return true;
 }
 
 static void view_destroyed(wlc_handle view) {
     mouseHandleViewClosed(view);
-    destroyWindow(view);
+    onViewDestroyed(view);
 }
 
 static void view_request_move(wlc_handle view, const struct wlc_point* origin) {
@@ -49,11 +50,11 @@ static void view_focus(wlc_handle view, bool focus) {
 }
 
 static bool output_created(wlc_handle const output) {
-    return createGrid(output) != NULL;
+    return onOutputCreated(output) != NULL;
 }
 
 static void output_destroyed(wlc_handle const output) {
-    destroyGrid(output);
+    onOutputDestroyed(output);
 }
 
 // TODO: resolution changed
@@ -66,6 +67,7 @@ static void runStartupScript() {
 
 int main(int argc, char *argv[]) {
     readConfig();
+    meta_init();
     grid_init();
     
     wlc_set_view_created_cb         (&view_created);
@@ -88,6 +90,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
 
     wlc_run();
-    grid_free();
+    meta_free();
     return EXIT_SUCCESS;
 }

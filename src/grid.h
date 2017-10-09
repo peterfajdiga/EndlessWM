@@ -13,7 +13,6 @@ struct Grid {
     struct Row* lastRow;
     wlc_handle output;
     double scroll;
-    uint32_t* wallpaper;  // TODO: Do in a client
 };
 
 struct Row {
@@ -50,7 +49,6 @@ struct Edge {
 };
 
 void grid_init();
-void grid_free();
 
 // getters
 struct Grid* getGrid(wlc_handle output);
