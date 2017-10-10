@@ -193,6 +193,9 @@ void readConfig() {
     
     if (changesMade) {
         g_key_file_save_to_file(configFile, configFilePath, &error);
+        if (error != NULL) {
+            fprintf(stderr, "Error writing config file to %s\n", configFilePath);
+        }
     }
     
     free(configFilePath);
