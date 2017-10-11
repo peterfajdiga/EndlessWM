@@ -1,6 +1,7 @@
 #include "grid.h"
 #include "config.h"
 #include "metamanager.h"
+#include "mouse.h"
 
 #include <float.h>
 #include <math.h>
@@ -313,6 +314,8 @@ void scrollToRow(const struct Row* row) {
 
     // do scroll
     applyGridGeometry(grid);
+
+    hoveredEdge = NULL;
 }
 
 void resizeRow(struct Row* row, int32_t sizeDelta) {
@@ -350,6 +353,8 @@ struct Window* createWindow(wlc_handle const view) {
 }
 
 void destroyWindow(wlc_handle const view) {
+    hoveredEdge = NULL;
+
     struct Window* window = getWindow(view);
     if (window == NULL) {
         return;
@@ -565,6 +570,7 @@ void printGrid(const struct Grid* grid) {
 void scrollGrid(struct Grid* grid, double amount) {
     grid->scroll += amount;
     ensureSensibleScroll(grid);
+    hoveredEdge = NULL;
 }
 
 void ensureSensibleScroll(struct Grid* grid) {
