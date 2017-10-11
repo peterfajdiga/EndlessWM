@@ -12,6 +12,11 @@
 #define EDGE_START ((grid_windowSpacing - EDGE_WIDTH) / 2)
 #define EDGE_START_FROM_END ((EDGE_WIDTH + grid_windowSpacing) / 2)
 
+#define EDGE_RESIZE_COLOR 0x80FFFFFF
+#define EDGE_MOVE_COLOR 0x800000FF
+#define WINDOW_MOVE_TINT 0x80000040
+#define WINDOW_INACTIVE_TINT 0xA0000000
+
 
 
 static void paintGeomColor(const struct wlc_geometry* geom, uint32_t color) {
@@ -128,13 +133,13 @@ void output_render_pre(wlc_handle const output) {
 
 void output_render_post(wlc_handle const output) {
     if (hoveredEdge != NULL) {
-        tintEdge(hoveredEdge, 0x80FFFFFF);
+        tintEdge(hoveredEdge, EDGE_RESIZE_COLOR);
     }
     if (insertEdge != NULL) {
-        tintEdge(insertEdge, 0x80FFFFFF);
+        tintEdge(insertEdge, EDGE_MOVE_COLOR);
     }
     if (mouseState == MOVING_GRIDDED && movedView > 0) {
-        tintView(movedView, 0xA0000000);
+        tintView(movedView, WINDOW_MOVE_TINT);
     }
     /*const struct Row* hoveredRow = getHoveredRow(getGrid(output));
     if (hoveredRow != NULL) {
@@ -151,7 +156,7 @@ void output_render_post(wlc_handle const output) {
                 // view active
             } else {
                 // view inactive
-                tintView(view, 0x80000000);
+                tintView(view, WINDOW_INACTIVE_TINT);
             }
         }
     }
