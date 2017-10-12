@@ -21,9 +21,8 @@ struct Row {
     struct Window* firstWindow;
     struct Window* lastWindow;
     struct Grid* parent;
-    uint32_t origin;  // TODO: make signed
+    int32_t origin;
     uint32_t size;
-    uint32_t preferredSize;
 };
 
 struct Window {
@@ -33,7 +32,8 @@ struct Window {
     struct Row* parent;
     uint32_t origin;
     uint32_t size;
-    uint32_t preferredSize;
+    uint32_t preferredWidth;
+    uint32_t preferredHeight;
 };
 
 enum EdgeType {
@@ -92,7 +92,9 @@ static void addWindowToRowAfter(struct Window* window, struct Row* row, struct W
 static void removeWindow(struct Window* window);
 static void positionWindow(struct Window* window);
 static void applyWindowGeometry(const struct Window* window);
+uint32_t getWindowPreferredSize(const struct Window* window);
 void resizeWindow(struct Window* window, int32_t sizeDelta);
+static void resetWindowSize(struct Window* window);
 
 // presentation
 void printGrid(const struct Grid* grid);

@@ -191,17 +191,18 @@ void resizeWindowsIfNecessary(struct Row* const row) {
     uint32_t maxRowLength = getMaxRowLength(row->parent->output);
     struct Window* window = row->firstWindow;
     while (window != NULL) {
+        uint32_t const preferredSize = getWindowPreferredSize(window);
         windowsSizeSum += window->size;
-        windowsPreferredSizeSum += window->preferredSize;
+        windowsPreferredSizeSum += preferredSize;
         maxRowLength -= grid_windowSpacing;
-        window->size = window->preferredSize;
+        window->size = preferredSize;
         window = window->next;
     }
     if (windowsPreferredSizeSum > maxRowLength || grid_minimizeEmptySpace) {
         double ratio = (double)maxRowLength / windowsPreferredSizeSum;
         window = row->firstWindow;
         while (window != NULL) {
-            window->size = (uint32_t)round(window->preferredSize * ratio);
+            window->size = (uint32_t)round(getWindowPreferredSize(window) * ratio);
             window = window->next;
         }
     }
@@ -222,7 +223,6 @@ struct Row* createRow(wlc_handle view) {
     row->lastWindow = NULL;
     row->parent = NULL;       // probably unnecessary (except for asserts)
     row->size = rowSize;
-    row->preferredSize = rowSize;
     
     addRowToGrid(row, grid);
     return row;
@@ -321,7 +321,6 @@ void scrollToRow(const struct Row* row) {
 void resizeRow(struct Row* row, int32_t sizeDelta) {
     row->size += sizeDelta;
     ensureMinSize(&row->size);
-    row->preferredSize = row->size;
     layoutGridAt(row);
 }
 
@@ -345,7 +344,8 @@ struct Window* createWindow(wlc_handle const view) {
     window->parent = NULL;  // probably unnecessary (except for asserts)
     window->view = view;
     window->size = windowSize;
-    window->preferredSize = windowSize;
+    window->preferredWidth = viewSize.w;
+    window->preferredHeight = viewSize.h;
 
     struct Row* row = createRow(view);
     addWindowToRow(window, row);
@@ -408,7 +408,7 @@ void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* 
     struct Window* next;
     window->prev = prev;
     window->parent = row;
-    window->size = window->preferredSize;
+    window->size = getWindowPreferredSize(window);
     if (prev == NULL) {
         // placing as firstWindow
         next = row->firstWindow;
@@ -430,7 +430,7 @@ void addWindowToRowAfter(struct Window* window, struct Row* row, struct Window* 
     resizeWindowsIfNecessary(row);
 }
 
-void removeWindow(struct Window* window) {
+void removeWindow(struct Window* const window) {
     struct Row* row = window->parent;
     struct Window* left = window->prev;
     struct Window* right = window->next;
@@ -462,6 +462,8 @@ void removeWindow(struct Window* window) {
         // otherwise recalculate window sizes and positions
         resizeWindowsIfNecessary(row);
     }
+
+    resetWindowSize(window);
 }
 
 void positionWindow(struct Window* window) {
@@ -500,6 +502,10 @@ void applyWindowGeometry(const struct Window* window) {
     }
 }
 
+uint32_t getWindowPreferredSize(const struct Window* window) {
+    return grid_horizontal ? window->preferredHeight : window->preferredWidth;
+}
+
 void resizeWindow(struct Window* window, int32_t sizeDelta) {
     if (sizeDelta < 0) {
         // resizedWindow is shrinking
@@ -512,7 +518,7 @@ void resizeWindow(struct Window* window, int32_t sizeDelta) {
         int32_t availableRoom = -sizeDelta;
         struct Window* next = window->next;
         while (next != NULL && availableRoom > 0) {
-            int32_t desiredNextGrowth = grid_minimizeEmptySpace ? INT32_MAX : next->preferredSize - next->size;
+            int32_t desiredNextGrowth = grid_minimizeEmptySpace ? INT32_MAX : getWindowPreferredSize(next) - next->size;
             if (desiredNextGrowth > 0) {
                 if (desiredNextGrowth > availableRoom) {
                     desiredNextGrowth = availableRoom;
@@ -545,8 +551,20 @@ void resizeWindow(struct Window* window, int32_t sizeDelta) {
 
     // apply new geometry
     window->size += sizeDelta;
-    window->preferredSize = window->size;
+    if (grid_horizontal) {
+        window->preferredHeight = window->size;
+    } else {
+        window->preferredWidth = window->size;
+    }
     layoutRow(window->parent);
+}
+
+static void resetWindowSize(struct Window* window) {
+    struct wlc_geometry geom;
+    geom.origin = wlc_view_get_geometry(window->view)->origin;
+    geom.size.w = window->preferredWidth;
+    geom.size.h = window->preferredHeight;
+    wlc_view_set_geometry(window->view, 0, &geom);
 }
 
 
