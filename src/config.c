@@ -26,7 +26,6 @@ static void initDefaults() {
 
     // Keybindings
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
-    keystroke_ksysguard          = (struct Keystroke){WLC_BIT_MOD_CTRL, XKB_KEY_Escape};
     keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F4};
     keystroke_launch             = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
     keystroke_focusWindowUp      = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
