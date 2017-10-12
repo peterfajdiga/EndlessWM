@@ -5,9 +5,8 @@
 #include "keystroke.h"
 
 
-#define MOD_WM0 WLC_BIT_MOD_LOGO
-#define MOD_WM1 (WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT)
-#define MOD_WM2 (WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL)
+#define MOD_WM1 (MOD_WM0 | WLC_BIT_MOD_SHIFT)
+#define MOD_WM2 (MOD_WM0 | WLC_BIT_MOD_CTRL)
 
 
 
@@ -30,6 +29,7 @@ bool grid_floatingDialogs;
 uint32_t grid_windowSpacing;
 
 // Keybindings
+uint32_t MOD_WM0;
 struct Keystroke keystroke_terminate;
 struct Keystroke keystroke_closeWindow;
 struct Keystroke keystroke_launch;

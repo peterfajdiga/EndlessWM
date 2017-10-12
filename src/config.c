@@ -28,24 +28,32 @@ static void initDefaults() {
     keystroke_terminate          = (struct Keystroke){WLC_BIT_MOD_CTRL | WLC_BIT_MOD_ALT, XKB_KEY_Delete};
     keystroke_closeWindow        = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F4};
     keystroke_launch             = (struct Keystroke){WLC_BIT_MOD_ALT,  XKB_KEY_F2};
-    keystroke_focusWindowUp      = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Up};
-    keystroke_focusWindowDown    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Down};
-    keystroke_focusWindowLeft    = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Left};
-    keystroke_focusWindowRight   = (struct Keystroke){WLC_BIT_MOD_LOGO, XKB_KEY_Right};
-    keystroke_moveWindowUp       = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Up};
-    keystroke_moveWindowDown     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Down};
-    keystroke_moveWindowLeft     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Left};
-    keystroke_moveWindowRight    = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_SHIFT, XKB_KEY_Right};
-    keystroke_moveRowBack        = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Up};
-    keystroke_moveRowForward     = (struct Keystroke){WLC_BIT_MOD_LOGO | WLC_BIT_MOD_CTRL,  XKB_KEY_Down};
-
-    // Mousebindings (not configurable)
-    mousestroke_move   = (struct Keystroke){MOD_WM0, BTN_LEFT};
-    mousestroke_resize = (struct Keystroke){MOD_WM0, BTN_RIGHT};
+    // the other keybindings defaults are set in setMainMod()
 
     // Application shortcuts (see readConfig() for defaults)
     applicationShortcuts = NULL;
     applicationShortcutCount = 0;
+}
+
+// run before reading keybindings
+static void setMainMod(bool const useAlt) {
+    MOD_WM0 = useAlt ? WLC_BIT_MOD_ALT : WLC_BIT_MOD_LOGO;
+
+    // Keybindings
+    keystroke_focusWindowUp      = (struct Keystroke){MOD_WM0, XKB_KEY_Up};
+    keystroke_focusWindowDown    = (struct Keystroke){MOD_WM0, XKB_KEY_Down};
+    keystroke_focusWindowLeft    = (struct Keystroke){MOD_WM0, XKB_KEY_Left};
+    keystroke_focusWindowRight   = (struct Keystroke){MOD_WM0, XKB_KEY_Right};
+    keystroke_moveWindowUp       = (struct Keystroke){MOD_WM1, XKB_KEY_Up};
+    keystroke_moveWindowDown     = (struct Keystroke){MOD_WM1, XKB_KEY_Down};
+    keystroke_moveWindowLeft     = (struct Keystroke){MOD_WM1, XKB_KEY_Left};
+    keystroke_moveWindowRight    = (struct Keystroke){MOD_WM1, XKB_KEY_Right};
+    keystroke_moveRowBack        = (struct Keystroke){MOD_WM2, XKB_KEY_Up};
+    keystroke_moveRowForward     = (struct Keystroke){MOD_WM2, XKB_KEY_Down};
+
+    // Mousebindings (not configurable)
+    mousestroke_move   = (struct Keystroke){MOD_WM0, BTN_LEFT};
+    mousestroke_resize = (struct Keystroke){MOD_WM0, BTN_RIGHT};
 }
 
 
@@ -138,6 +146,9 @@ void readConfig() {
     readInteger(&grid_windowSpacing     , "windowSpacing");
 
     group = "Keybindings";
+    bool keystroke_useAltAsMainMod = false;
+    readBoolean(&keystroke_useAltAsMainMod, "useAltAsMainMod");
+    setMainMod(keystroke_useAltAsMainMod);  // must be run before reading keybindings
     readKeybinding(&keystroke_terminate       , "terminate");
     readKeybinding(&keystroke_closeWindow     , "closeWindow");
     readKeybinding(&keystroke_launch          , "launch");
