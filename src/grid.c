@@ -321,6 +321,13 @@ void scrollToRow(const struct Row* row) {
 void resizeRow(struct Row* row, int32_t sizeDelta) {
     row->size += sizeDelta;
     ensureMinSize(&row->size);
+    for (struct Window* window = row->firstWindow; window != NULL; window = window->next) {
+        if (grid_horizontal) {
+            window->preferredWidth = row->size;
+        } else {
+            window->preferredHeight = row->size;
+        }
+    }
     layoutGridAt(row);
 }
 
