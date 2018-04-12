@@ -4,7 +4,7 @@
 #include <time.h>
 #include <wayland-server.h>
 #include <wlc/wlc-wayland.h>
-
+#include <stdio.h>
 
 
 bool testKeystroke(const struct Keystroke* const keystroke, uint32_t const mods, uint32_t const sym) {
@@ -105,6 +105,12 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
                     return true;
                 }
             }
+        }
+
+        // win+number row switching
+        if (mods == MOD_WM0 && sym >= '0' && sym <= '9') {
+            focusRow((sym - '0' + 9) % 10);  // '0' is 9, '1' is 0, '2' is 1, ...
+            return true;
         }
     }
 

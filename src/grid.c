@@ -670,6 +670,17 @@ struct Window* getWindowRight(const struct Window* window) {
 
 // view management
 
+void focusRow(size_t const index) {
+    const struct Row* selectedRow = getGrid(wlc_get_focused_output())->firstRow;
+    for (size_t i = 0; i < index && selectedRow != NULL; i++) {
+        selectedRow = selectedRow->next;
+    }
+    if (selectedRow == NULL) {
+        return;
+    }
+    wlc_view_focus(selectedRow->firstWindow->view);
+}
+
 typedef struct Window* (*WindowNeighborGetter)(const struct Window* window);
 static void focusViewInner(wlc_handle const view, WindowNeighborGetter getNeighbor) {
     const struct Window* currentWindow = getWindow(getGriddedParentView(view));
