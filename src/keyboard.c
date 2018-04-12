@@ -109,7 +109,7 @@ bool keyboard_key(wlc_handle view, uint32_t time, const struct wlc_modifiers *mo
 
         // win+number row switching
         if (mods == MOD_WM0 && sym >= '0' && sym <= '9') {
-            focusRow((sym - '0' + 9) % 10);  // '0' is 9, '1' is 0, '2' is 1, ...
+            focusRow((sym - '0' + 9) % 10, view);  // '0' is 9, '1' is 0, '2' is 1, ...
             return true;
         }
     }

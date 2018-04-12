@@ -112,7 +112,7 @@ static struct Window* getWindowRight(const struct Window* window);
 
 
 // view management
-void focusRow(size_t index);
+void focusRow(size_t index, wlc_handle currentView);
 void focusViewAbove(wlc_handle view);
 void focusViewBelow(wlc_handle view);
 void focusViewLeft(wlc_handle view);
