@@ -1,2 +1,2 @@
 # EndlessWM
-A scrolling window manager for Wayland based on wlc
+A proof of concept of a scrolling window manager for Wayland based on wlc
