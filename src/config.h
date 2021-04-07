@@ -4,11 +4,8 @@
 
 #include "keystroke.h"
 
-
 #define MOD_WM1 (MOD_WM0 | WLC_BIT_MOD_SHIFT)
 #define MOD_WM2 (MOD_WM0 | WLC_BIT_MOD_CTRL)
-
-
 
 struct ApplicationShortcut {
     struct Keystroke binding;

@@ -1,11 +1,8 @@
 #pragma once
 
-
 #include "grid.h"
 
 #include <wlc/wlc.h>
-
-
 
 enum MouseState {
     NORMAL,

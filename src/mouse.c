@@ -8,7 +8,6 @@
 #include <wlc/wlc-wayland.h>
 #include <stdlib.h>
 
-
 enum MouseModState {
     UNPRESSED,
     PRESSED,
@@ -30,7 +29,6 @@ static struct Window* resizedWindow = NULL;
 static struct Row* resizedRow = NULL;
 struct Edge* hoveredEdge = NULL;
 struct Edge* insertEdge = NULL;
-
 
 void sendButton(wlc_handle const view, uint32_t const button) {
     struct wl_client* const client = wlc_view_get_wl_client(view);

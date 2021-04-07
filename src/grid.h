@@ -1,12 +1,8 @@
 #pragma once
 
-
 #include <wlc/wlc.h>
 
-
 #define MIN_WINDOW_SIZE 64
-
-
 
 struct Grid {
     struct Row* firstRow;
@@ -101,7 +97,6 @@ void printGrid(const struct Grid* grid);
 void scrollGrid(struct Grid* grid, double amount);
 static void ensureSensibleScroll(struct Grid* grid);
 
-
 // neighboring Windows
 static struct Window* getWindowParallelPrev(const struct Window* window);
 static struct Window* getWindowParallelNext(const struct Window* window);
@@ -109,7 +104,6 @@ static struct Window* getWindowAbove(const struct Window* window);
 static struct Window* getWindowBelow(const struct Window* window);
 static struct Window* getWindowLeft(const struct Window* window);
 static struct Window* getWindowRight(const struct Window* window);
-
 
 // view management
 void focusRow(size_t index, wlc_handle currentView);

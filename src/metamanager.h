@@ -1,9 +1,6 @@
 #pragma once
 
-
 #include "grid.h"
-
-
 
 struct Output {
     struct Grid* grid;
@@ -16,7 +13,6 @@ struct View {
 
 void meta_init();
 void meta_free();
-
 
 struct Output* getOutput(wlc_handle output);
 struct View* getView(wlc_handle view);

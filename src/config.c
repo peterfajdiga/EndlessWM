@@ -5,10 +5,7 @@
 #include <linux/input.h>
 #include <stdio.h>
 
-
 #define CONFIG_FILE_PATH "/.config/endlesswm"
-
-
 
 static void initDefaults() {
 
@@ -56,8 +53,6 @@ static void setMainMod(bool const useAlt) {
     mousestroke_resize = (struct Keystroke){MOD_WM0, BTN_RIGHT};
 }
 
-
-
 // needs to be freed afterwards
 // relativeFilePath needs to be prefixed with '/'
 char* getHomeFilePath(const char* relativeFilePath) {
@@ -69,8 +64,6 @@ char* getHomeFilePath(const char* relativeFilePath) {
     strcat(retval, relativeFilePath);
     return retval;
 }
-
-
 
 static GKeyFile* configFile;
 static const char* group;

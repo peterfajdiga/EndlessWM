@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <X11/Xlib.h>
 
-
-
 struct Keystroke parseKeystroke(const char* str) {
     struct Keystroke retval;
     retval.mods = 0;

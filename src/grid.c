@@ -9,10 +9,7 @@
 #include <stdio.h>
 #include <wlc/wlc-render.h>
 
-
 #define ROW_EDGE_GRAB_SIZE (grid_windowSpacing / 2 + 24)
-
-
 
 static uint32_t GRIDDABLE_TYPES = 0;
 
@@ -21,8 +18,6 @@ void grid_init() {
         GRIDDABLE_TYPES |= WLC_BIT_MODAL;
     }
 }
-
-
 
 // getters
 
@@ -68,8 +63,6 @@ uint32_t getPageLength(wlc_handle const output) {
         return wlc_output_get_virtual_resolution(output)->h - grid_windowSpacing;
     }
 }
-
-
 
 // grid operations
 
@@ -118,8 +111,6 @@ static void clearGrid(struct Grid* grid) {
         // row is freed by function destroyWindow
     }
 }
-
-
 
 // row operations
 
@@ -330,8 +321,6 @@ void resizeRow(struct Row* row, int32_t sizeDelta) {
     }
     layoutGridAt(row);
 }
-
-
 
 // window operations
 
@@ -574,8 +563,6 @@ static void resetWindowSize(struct Window* window) {
     wlc_view_set_geometry(window->view, 0, &geom);
 }
 
-
-
 // presentation
 
 void printGrid(const struct Grid* grid) {
@@ -617,8 +604,6 @@ void ensureSensibleScroll(struct Grid* grid) {
     }
     layoutGrid(grid);
 }
-
-
 
 // neighboring Windows
 
@@ -665,8 +650,6 @@ struct Window* getWindowRight(const struct Window* window) {
     }
     return window->next;
 }
-
-
 
 // view management
 
@@ -1044,8 +1027,6 @@ void moveViewToEdge(wlc_handle const view, struct Edge *edge) {
         case EDGE_CORNER: assert (false);
     }
 }
-
-
 
 // output management
 

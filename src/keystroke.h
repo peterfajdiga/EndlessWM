@@ -2,7 +2,6 @@
 
 #include <wlc/wlc.h>
 
-
 struct Keystroke {
     uint32_t mods;
     uint32_t sym;

@@ -4,7 +4,6 @@
 
 #include "config.h"
 
-
 bool testKeystroke(const struct Keystroke* keystroke, uint32_t mods, uint32_t sym);
 void sendKey(wlc_handle view, const struct Keystroke* keystroke);
 

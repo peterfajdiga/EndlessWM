@@ -6,7 +6,6 @@
 #include <wlc/wlc-wayland.h>
 #include <stdio.h>
 
-
 bool testKeystroke(const struct Keystroke* const keystroke, uint32_t const mods, uint32_t const sym) {
     return keystroke->mods == mods && keystroke->sym == sym;
 }

@@ -7,7 +7,6 @@
 #include <wlc/wlc-render.h>
 #include <stdlib.h>
 
-
 #define EDGE_WIDTH (grid_windowSpacing / 4)
 #define EDGE_START ((grid_windowSpacing - EDGE_WIDTH) / 2)
 #define EDGE_START_FROM_END ((EDGE_WIDTH + grid_windowSpacing) / 2)
@@ -16,8 +15,6 @@
 #define EDGE_MOVE_COLOR 0x800000FF
 #define WINDOW_MOVE_TINT 0x80000040
 #define WINDOW_INACTIVE_TINT 0xA0000000
-
-
 
 static void paintGeomColor(const struct wlc_geometry* geom, uint32_t color) {
     uint32_t width = geom->size.w;

@@ -2,10 +2,7 @@
 
 #include <stdlib.h>
 
-
 #define MIN_VIEW_COUNT 32
-
-
 
 static struct Output** outputs = NULL;
 static size_t outputCount = 0;
@@ -36,7 +33,6 @@ static size_t getViewsOccupancy() {
     return lowestShrinkThreshold;  // or less, we don't care
 }
 
-
 struct Output* getOutput(wlc_handle output) {
     if (output >= outputCount) {
         return NULL;
@@ -50,7 +46,6 @@ struct View* getView(wlc_handle view) {
     }
     return views[view];
 }
-
 
 struct Output* onOutputCreated(wlc_handle output) {
     if (output >= outputCount) {
@@ -94,7 +89,6 @@ struct View* onViewCreated(wlc_handle view) {
     return viewMeta;
 }
 
-
 void onOutputDestroyed(wlc_handle output) {
     struct Output* outputMeta = getOutput(output);
     assert (outputMeta != NULL);
@@ -119,7 +113,6 @@ void onViewDestroyed(wlc_handle view) {
         views = realloc(views, targetSize * sizeof(struct Window*));
     }
 }
-
 
 struct Output* getAnOutput() {
     for (size_t i = 0; i < outputCount; i++) {
