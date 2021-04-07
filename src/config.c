@@ -51,8 +51,8 @@ static void initDefaults() {
     behavior_scrollMult = 5.0;
 
     // Grid
-    grid_horizontal = false;
-    grid_minimizeEmptySpace = false;
+    grid_horizontal = true;
+    grid_minimizeEmptySpace = true;
     grid_floatingDialogs = true;
     grid_windowSpacing = 8;
 
