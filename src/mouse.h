@@ -4,7 +4,7 @@
 
 #include <wlc/wlc.h>
 
-enum MouseState {
+extern enum MouseState {
     NORMAL,
     MOVING_FLOATING,
     RESIZING_FLOATING,
@@ -13,9 +13,9 @@ enum MouseState {
     RESIZING_ROW
 } mouseState;
 
-wlc_handle movedView;
-struct Edge* hoveredEdge;
-struct Edge* insertEdge;
+extern wlc_handle movedView;
+extern struct Edge* hoveredEdge;
+extern struct Edge* insertEdge;
 
 void sendButton(wlc_handle view, uint32_t button);
 
