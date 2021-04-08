@@ -59,3 +59,11 @@ dkms.conf
 
 # CMake
 cmake-build-debug/
+cmake-build-release/
+
+# CMake .
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+endlesswm
