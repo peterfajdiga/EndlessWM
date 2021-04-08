@@ -16,7 +16,9 @@ set(SOURCE_FILES
         src/mouse.c
         src/mouse.h
         src/painting.c
-        src/painting.h src/metamanager.c src/metamanager.h)
+        src/painting.h
+        src/metamanager.c
+        src/metamanager.h)
 
 add_executable(endlesswm ${SOURCE_FILES})
 
