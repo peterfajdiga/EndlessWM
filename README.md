@@ -1,7 +1,7 @@
 # EndlessWM
 A proof of concept of a scrolling window manager.
 
-![peek_edited](https://user-images.githubusercontent.com/22796326/114103881-2ebebd00-98ca-11eb-80c1-d9d5616c0b2b.gif)
+![demonstration](https://user-images.githubusercontent.com/22796326/114304454-811efa00-9ad3-11eb-914d-8c09dab338c3.gif)
 
 ### A what?
 A window manager where the width of the workspace is not limited by the width of the screen, and where the user can then scroll through the width of the workspace.
