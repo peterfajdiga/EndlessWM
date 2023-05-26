@@ -15,11 +15,7 @@ Because the workspace is infinitely wide, when a new window is opened, it can si
 EndlessWM is a Wayland compositor that uses the (now deprecated) [wlc](https://github.com/Cloudef/wlc) library.
 It is a working proof of concept, but it is not intended to be actually used for your daily window managing needs.
 
-I'm hoping to eventually find the time to create a proper window manager like this.
-Any suggestions are welcome.
-
 ## Building
-`.gitignore` is setup to ignore directories `cmake-build-debug` and `cmake-build-release`, so I'd suggest to make use of this and build in one of the following ways:
 
 #### Debug
 ```
@@ -32,3 +28,8 @@ cmake --build ./cmake-build-debug
 cmake -DCMAKE_BUILD_TYPE=Release -B ./cmake-build-release
 cmake --build ./cmake-build-release
 ```
+
+## Other scrolling WMs
+- [Karousel](https://github.com/peterfajdiga/karousel)
+- [Cardboard](https://gitlab.com/cardboardwm/cardboard)
+- [PaperWM](https://github.com/paperwm/PaperWM)
