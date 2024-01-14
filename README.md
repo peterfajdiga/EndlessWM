@@ -30,7 +30,7 @@ cmake --build ./cmake-build-release
 ```
 
 ## Other scrolling WMs
-- [Karousel](https://github.com/peterfajdiga/karousel)
 - [Niri](https://github.com/YaLTeR/niri)
+- [Karousel](https://github.com/peterfajdiga/karousel)
 - [PaperWM](https://github.com/paperwm/PaperWM)
 - [Cardboard](https://gitlab.com/cardboardwm/cardboard)
